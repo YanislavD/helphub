@@ -1,0 +1,158 @@
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+@import 'tailwindcss';
+
+/*
+ * Design tokens – ported 1:1 from the design canvas (hh.css).
+ *
+ * Two layers, on purpose:
+ *   1. :root / :root.light  → the real values (CSS variables). Switching theme = switching these.
+ *   2. @theme inline        → tells Tailwind "bg-surface means var(--surface)".
+ *      `inline` keeps the var() reference in the generated CSS, so utilities follow the theme.
+ */
+:root {
+  /* surfaces */
+  --bg: #0a0b0e;
+  --surface: #0f1115;
+  --raised: #14171c;
+  --overlay: #1a1e25;
+  --hover: rgb(255 255 255 / 0.04);
+  --hover-2: rgb(255 255 255 / 0.07);
+  --border: rgb(255 255 255 / 0.08);
+  --border-2: rgb(255 255 255 / 0.15);
+  --field: rgb(255 255 255 / 0.03);
+  --code: #0b0d11;
+  --scrim: rgb(4 5 7 / 0.62);
+
+  /* text */
+  --fg: #eceef2;
+  --fg-muted: #a6adbb;
+  --fg-subtle: #838b9e;
+
+  /* the one accent */
+  --accent: #4f5df0;
+  --accent-hi: color-mix(in srgb, var(--accent) 50%, #fff);
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --accent-line: color-mix(in srgb, var(--accent) 42%, transparent);
+
+  /* semantic */
+  --ok: #4ade9a;
+  --ok-soft: rgb(74 222 154 / 0.12);
+  --warn: #f5b544;
+  --warn-soft: rgb(245 181 68 / 0.12);
+  --err: #ff7a7a;
+  --err-soft: rgb(255 122 122 / 0.12);
+
+  --card-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 16px 40px -12px rgb(0 0 0 / 0.55);
+
+  color-scheme: dark;
+}
+
+:root.light {
+  --bg: #f5f6f9;
+  --surface: #ffffff;
+  --raised: #ffffff;
+  --overlay: #ffffff;
+  --hover: rgb(15 18 24 / 0.045);
+  --hover-2: rgb(15 18 24 / 0.075);
+  --border: rgb(15 18 24 / 0.09);
+  --border-2: rgb(15 18 24 / 0.17);
+  --field: #ffffff;
+  --code: #f0f2f7;
+  --scrim: rgb(15 18 24 / 0.38);
+
+  --fg: #0f1218;
+  --fg-muted: #444b5a;
+  --fg-subtle: #636b7c;
+
+  --accent-hi: color-mix(in srgb, var(--accent) 80%, #000);
+
+  --ok: #0f7a52;
+  --ok-soft: rgb(15 122 82 / 0.1);
+  --warn: #8a5700;
+  --warn-soft: rgb(190 115 0 / 0.13);
+  --err: #b42e2e;
+  --err-soft: rgb(180 46 46 / 0.09);
+
+  --card-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 16px 40px -12px rgb(16 24 40 / 0.16);
+
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-overlay: var(--overlay);
+  --color-hover: var(--hover);
+  --color-hover-2: var(--hover-2);
+  --color-line: var(--border);
+  --color-line-2: var(--border-2);
+  --color-field: var(--field);
+  --color-code: var(--code);
+  --color-scrim: var(--scrim);
+
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+
+  --color-accent: var(--accent);
+  --color-accent-hi: var(--accent-hi);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-err: var(--err);
+  --color-err-soft: var(--err-soft);
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --shadow-card: var(--card-shadow);
+
+  --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, Consolas, monospace;
+}
+
+@layer base {
+  /* Tailwind v4 defaults borders to currentColor; use our subtle border token instead. */
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+
+  html {
+    background: var(--bg);
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 22px;
+    letter-spacing: -0.006em;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::placeholder {
+    color: var(--fg-subtle);
+    opacity: 1;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent-hi);
+    outline-offset: 2px;
+  }
+
+  button {
+    cursor: pointer;
+  }
+}
