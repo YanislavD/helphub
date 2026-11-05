@@ -14,6 +14,7 @@ import { Logo } from '@/components/Logo'
 import { SupabaseNotice } from '@/components/SupabaseNotice'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Button } from '@/components/ui/Button'
+import { AccountControls } from '@/features/auth/AccountControls'
 import { cn } from '@/lib/cn'
 
 interface NavItem {
@@ -135,7 +136,13 @@ export function AgentLayout() {
               <ExternalLink className="size-[18px]" aria-hidden="true" />
               {!collapsed && <span>Mitarbeiteransicht</span>}
             </NavLink>
-            <div className={cn('flex items-center gap-2', collapsed ? 'flex-col' : 'px-1.5 pt-2')}>
+            <div
+              className={cn(
+                'flex items-center gap-2',
+                collapsed ? 'flex-col' : 'justify-between px-1.5 pt-2',
+              )}
+            >
+              <AccountControls compact={collapsed} />
               <ThemeToggle />
             </div>
           </div>

@@ -4,15 +4,24 @@ import { Logo } from '@/components/Logo'
 import { SupabaseNotice } from '@/components/SupabaseNotice'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Button } from '@/components/ui/Button'
+import { AccountControls } from '@/features/auth/AccountControls'
+import { useAuth } from '@/features/auth/useAuth'
 import { cn } from '@/lib/cn'
 
-const links = [
+const baseLinks = [
   { to: '/', label: 'Startseite', end: true },
   { to: '/search', label: 'Alle Artikel', end: false },
 ]
 
 /** Simple top navigation for employees (design screens 2–5). */
 export function EmployeeLayout() {
+  const { role } = useAuth()
+  // Agents and admins get a shortcut into their area; the guard in the router still decides access.
+  const links =
+    role === 'agent' || role === 'admin'
+      ? [...baseLinks, { to: '/agent', label: 'Agent-Bereich', end: false }]
+      : baseLinks
+
   return (
     <div className="min-h-screen">
       <SupabaseNotice />
@@ -40,12 +49,7 @@ export function EmployeeLayout() {
         <Button variant="ghost" size="icon-sm" aria-label="Benachrichtigungen">
           <Bell className="size-[18px]" />
         </Button>
-        <NavLink
-          to="/login"
-          className="inline-flex h-8 items-center rounded-sm px-3 text-[13px] font-medium text-fg-muted transition hover:bg-hover-2 hover:text-fg"
-        >
-          Anmelden
-        </NavLink>
+        <AccountControls />
       </header>
       <Outlet />
     </div>

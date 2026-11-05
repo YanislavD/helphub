@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom'
+import { RequireRole } from '@/features/auth/RequireRole'
 import { AgentLayout } from '@/layouts/AgentLayout'
 import { EmployeeLayout } from '@/layouts/EmployeeLayout'
 import { AgentPlaceholderPage } from '@/pages/AgentPlaceholderPage'
@@ -8,31 +9,52 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 import { SearchPage } from '@/pages/SearchPage'
 
 /**
- * Route table. Two layouts = two "shells":
- *  - EmployeeLayout: top navigation (everyone)
- *  - AgentLayout: collapsible sidebar (agent/admin) – gets role guards in stage 2
+ * Route table. Layouts are "shells" around groups of pages:
+ *  - EmployeeLayout: top navigation. Browsing the portal needs a login (RequireRole without roles).
+ *  - AgentLayout: collapsible sidebar, only for agent + admin.
+ *  - /admin/* additionally requires the admin role.
+ *  - /login has its own full-screen layout and is public.
  */
 export const router = createBrowserRouter([
+  { path: 'login', element: <LoginPage /> },
   {
-    element: <EmployeeLayout />,
+    element: (
+      <RequireRole>
+        <EmployeeLayout />
+      </RequireRole>
+    ),
     children: [
       { index: true, element: <HomePage /> },
       { path: 'search', element: <SearchPage /> },
-      { path: 'login', element: <LoginPage /> },
     ],
   },
   {
-    element: <AgentLayout />,
+    element: (
+      <RequireRole roles={['agent', 'admin']}>
+        <AgentLayout />
+      </RequireRole>
+    ),
     children: [
       { path: 'agent', element: <AgentPlaceholderPage /> },
       { path: 'agent/articles', element: <AgentPlaceholderPage /> },
       { path: 'agent/articles/new', element: <AgentPlaceholderPage /> },
-      { path: 'admin/categories', element: <AgentPlaceholderPage /> },
-      { path: 'admin/users', element: <AgentPlaceholderPage /> },
+      {
+        path: 'admin/categories',
+        element: (
+          <RequireRole roles={['admin']}>
+            <AgentPlaceholderPage />
+          </RequireRole>
+        ),
+      },
+      {
+        path: 'admin/users',
+        element: (
+          <RequireRole roles={['admin']}>
+            <AgentPlaceholderPage />
+          </RequireRole>
+        ),
+      },
     ],
   },
-  {
-    element: <EmployeeLayout />,
-    children: [{ path: '*', element: <NotFoundPage /> }],
-  },
+  { path: '*', element: <NotFoundPage /> },
 ])
