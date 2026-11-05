@@ -3,6 +3,8 @@ import { RequireRole } from '@/features/auth/RequireRole'
 import { AgentLayout } from '@/layouts/AgentLayout'
 import { EmployeeLayout } from '@/layouts/EmployeeLayout'
 import { AgentPlaceholderPage } from '@/pages/AgentPlaceholderPage'
+import { ArticleEditorPage } from '@/pages/agent/ArticleEditorPage'
+import { ArticlesPage } from '@/pages/agent/ArticlesPage'
 import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -36,8 +38,9 @@ export const router = createBrowserRouter([
     ),
     children: [
       { path: 'agent', element: <AgentPlaceholderPage /> },
-      { path: 'agent/articles', element: <AgentPlaceholderPage /> },
-      { path: 'agent/articles/new', element: <AgentPlaceholderPage /> },
+      { path: 'agent/articles', element: <ArticlesPage /> },
+      { path: 'agent/articles/new', element: <ArticleEditorPage /> },
+      { path: 'agent/articles/:id', element: <ArticleEditorPage /> },
       {
         path: 'admin/categories',
         element: (

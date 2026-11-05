@@ -2,10 +2,13 @@ import { Search, Sparkles } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
-import { categories, exampleQueries } from '@/lib/categories'
+import { getCategoryIcon } from '@/features/articles/category-icons'
+import { useCategories } from '@/features/articles/hooks'
+import { exampleQueries } from '@/lib/categories'
 
 export function HomePage() {
   const [query, setQuery] = useState('')
+  const categoriesQuery = useCategories()
   const navigate = useNavigate()
 
   function handleSubmit(event: FormEvent) {
@@ -68,22 +71,31 @@ export function HomePage() {
       <section className="mx-auto w-full max-w-[1160px] px-4 pb-20 sm:px-6">
         <h2 className="mb-5 text-lg font-semibold tracking-tight">Nach Kategorie stöbern</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {categories.map(({ slug, name, description, icon: Icon }) => (
-            <Link
-              key={slug}
-              to={`/search?category=${slug}`}
-              className="flex items-start gap-4 rounded-lg border bg-raised p-5 transition duration-200 hover:-translate-y-0.5 hover:border-line-2 hover:bg-overlay hover:shadow-card"
-            >
-              <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-accent-line bg-accent-soft text-accent-hi">
-                <Icon className="size-[22px]" aria-hidden="true" />
-              </span>
-              <span className="flex flex-col gap-0.5">
+          {categoriesQuery.isPending &&
+            Array.from({ length: 6 }, (_, i) => (
+              <div key={i} className="h-[84px] animate-pulse rounded-lg border bg-hover" />
+            ))}
+          {categoriesQuery.data?.map(({ slug, name, icon }) => {
+            const Icon = getCategoryIcon(icon)
+            return (
+              <Link
+                key={slug}
+                to={`/search?category=${slug}`}
+                className="flex items-center gap-4 rounded-lg border bg-raised p-5 transition duration-200 hover:-translate-y-0.5 hover:border-line-2 hover:bg-overlay hover:shadow-card"
+              >
+                <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-accent-line bg-accent-soft text-accent-hi">
+                  <Icon className="size-[22px]" aria-hidden="true" />
+                </span>
                 <span className="text-[15px] font-semibold">{name}</span>
-                <span className="text-[13px] text-fg-muted">{description}</span>
-              </span>
-            </Link>
-          ))}
+              </Link>
+            )
+          })}
         </div>
+        {categoriesQuery.isError && (
+          <p role="alert" className="text-sm text-err">
+            Die Kategorien konnten nicht geladen werden. Bitte lade die Seite neu.
+          </p>
+        )}
       </section>
     </>
   )

@@ -156,3 +156,210 @@
     cursor: pointer;
   }
 }
+
+/*
+ * Rendered Markdown (articles + editor preview). Ported from the design's ".prose".
+ * Lives in @layer components so Tailwind utilities can still override it.
+ */
+@layer components {
+  .prose-hh {
+    font-size: 16px;
+    line-height: 28px;
+    color: var(--fg-muted);
+    overflow-wrap: anywhere;
+  }
+  .prose-hh > :first-child {
+    margin-top: 0;
+  }
+  .prose-hh h1 {
+    margin: 0 0 16px;
+    font-size: 28px;
+    line-height: 36px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    color: var(--fg);
+  }
+  .prose-hh h2 {
+    margin: 40px 0 12px;
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    color: var(--fg);
+  }
+  .prose-hh h3 {
+    margin: 28px 0 8px;
+    font-size: 18px;
+    line-height: 28px;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    color: var(--fg);
+  }
+  .prose-hh p {
+    margin: 0 0 16px;
+  }
+  .prose-hh strong {
+    font-weight: 600;
+    color: var(--fg);
+  }
+  .prose-hh a {
+    color: var(--accent-hi);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--accent-line);
+  }
+  .prose-hh ul {
+    margin: 0 0 20px;
+    padding-left: 22px;
+    list-style: disc;
+  }
+  .prose-hh li {
+    margin-bottom: 6px;
+  }
+  .prose-hh li::marker {
+    color: var(--fg-subtle);
+  }
+  /* Numbered steps get a round badge, like in the design. */
+  .prose-hh ol {
+    list-style: none;
+    counter-reset: step;
+    padding: 0;
+    margin: 0 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .prose-hh ol > li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 44px;
+    min-height: 28px;
+    margin: 0;
+  }
+  .prose-hh ol > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--accent-line);
+    background: var(--accent-soft);
+    color: var(--accent-hi);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .prose-hh code {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    padding: 1px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--hover-2);
+    color: var(--fg);
+  }
+  .prose-hh pre {
+    margin: 0 0 20px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--code);
+    font-size: 13px;
+    line-height: 22px;
+  }
+  .prose-hh pre code {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: inherit;
+  }
+  .prose-hh img {
+    max-width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--border-2);
+  }
+  .prose-hh hr {
+    margin: 32px 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+  .prose-hh blockquote:not(.markdown-alert) {
+    margin: 0 0 20px;
+    padding: 2px 0 2px 16px;
+    border-left: 2px solid var(--border-2);
+    color: var(--fg-muted);
+  }
+  .prose-hh table {
+    width: 100%;
+    margin: 0 0 20px;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .prose-hh th,
+  .prose-hh td {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+  .prose-hh th {
+    color: var(--fg);
+    background: var(--hover);
+  }
+
+  /* GitHub-style alerts (> [!NOTE]) → the design's info / warning callouts */
+  .prose-hh .markdown-alert {
+    display: block;
+    margin: 0 0 20px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border-2);
+    font-size: 14px;
+    line-height: 22px;
+  }
+  .prose-hh .markdown-alert > :last-child {
+    margin-bottom: 0;
+  }
+  .prose-hh .markdown-alert .markdown-alert-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 4px;
+    font-weight: 600;
+    color: var(--fg);
+  }
+  .prose-hh .markdown-alert .markdown-alert-title svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+  .prose-hh .markdown-alert-note,
+  .prose-hh .markdown-alert-tip {
+    background: var(--accent-soft);
+    border-color: var(--accent-line);
+  }
+  .prose-hh .markdown-alert-note .markdown-alert-title,
+  .prose-hh .markdown-alert-tip .markdown-alert-title {
+    color: var(--accent-hi);
+  }
+  .prose-hh .markdown-alert-warning,
+  .prose-hh .markdown-alert-important {
+    background: var(--warn-soft);
+    border-color: color-mix(in srgb, var(--warn) 32%, transparent);
+  }
+  .prose-hh .markdown-alert-warning .markdown-alert-title,
+  .prose-hh .markdown-alert-important .markdown-alert-title {
+    color: var(--warn);
+  }
+  .prose-hh .markdown-alert-caution {
+    background: var(--err-soft);
+    border-color: color-mix(in srgb, var(--err) 32%, transparent);
+  }
+  .prose-hh .markdown-alert-caution .markdown-alert-title {
+    color: var(--err);
+  }
+}
