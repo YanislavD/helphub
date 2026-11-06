@@ -1,26 +1,8 @@
+import { safeFileName } from '@/lib/safe-file-name'
 import { supabase } from '@/lib/supabase'
 import type { Ticket, TicketInput } from './types'
 
 const BUCKET = 'ticket-attachments'
-
-/** Keeps the extension, replaces everything unusual – file names end up in a storage path. */
-function safeFileName(name: string): string {
-  const dot = name.lastIndexOf('.')
-  const base = (dot > 0 ? name.slice(0, dot) : name)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60)
-  const ext =
-    dot > 0
-      ? name
-          .slice(dot + 1)
-          .toLowerCase()
-          .replace(/[^a-z0-9]/g, '')
-          .slice(0, 8)
-      : ''
-  return `${base || 'datei'}${ext ? `.${ext}` : ''}`
-}
 
 /**
  * Creates a ticket, optionally with one attachment.

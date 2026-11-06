@@ -7,13 +7,9 @@ import { ThemeToggle } from '@/components/ThemeToggle'
 import { LoginForm, RegisterForm } from '@/features/auth/AuthForms'
 import { useAuth } from '@/features/auth/useAuth'
 import { cn } from '@/lib/cn'
+import { safeRedirect } from '@/lib/safe-redirect'
 
 type Mode = 'login' | 'register'
-
-/** Only allow redirects to paths inside our own app (blocks "open redirect" tricks like //evil.com). */
-function safeRedirect(value: string | null): string {
-  return value && value.startsWith('/') && !value.startsWith('//') ? value : '/'
-}
 
 const benefits = [
   'Suche in normaler Sprache – keine Fachbegriffe nötig',

@@ -10,6 +10,7 @@ export default defineConfig({
   test: {
     // Plain unit tests for pure logic; component tests (stage 9) switch to jsdom per file.
     environment: 'node',
+    setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}', 'supabase/functions/**/*.test.ts'],
   },
   resolve: {

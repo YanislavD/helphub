@@ -6,7 +6,7 @@ export interface EvalCase {
 
 /**
  * Test questions for the search-quality page (written the way employees actually phrase problems:
- * vague, without technical terms). The slugs belong to supabase/seed.sql + seed_extra.sql.
+ * vague, without technical terms). The slugs belong to supabase/seed.sql.
  * Extend this list whenever search produces a bad result – it doubles as a regression test.
  */
 export const evalCases: EvalCase[] = [

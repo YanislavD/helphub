@@ -1,6 +1,6 @@
 /**
  * Turns a title into a URL-friendly slug:
- *   "Passwort zurücksetzen – so geht's!"  →  "passwort-zuruecksetzen-so-gehts"
+ *   "Passwort zurücksetzen – so geht's!"  →  "passwort-zuruecksetzen-so-geht-s"
  * German umlauts are spelled out (ü → ue) instead of just dropped, as in German URLs.
  */
 export function slugify(text: string): string {
