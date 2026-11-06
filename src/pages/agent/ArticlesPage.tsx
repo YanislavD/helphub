@@ -26,11 +26,12 @@ export function ArticlesPage() {
   const toast = useToast()
   const { role } = useAuth()
   const [rebuilding, setRebuilding] = useState(false)
+  const [progress, setProgress] = useState({ done: 0, total: 0 })
 
   async function handleRebuildIndex() {
     setRebuilding(true)
     try {
-      const result = await rebuildSearchIndex()
+      const result = await rebuildSearchIndex((done, total) => setProgress({ done, total }))
       toast({
         title: 'Suchindex aktualisiert',
         description: `${result.indexed} Artikel, ${result.chunks} Abschnitte.`,
@@ -116,7 +117,9 @@ export function ArticlesPage() {
                 className={cn('size-4', rebuilding && 'animate-spin')}
                 aria-hidden="true"
               />
-              {rebuilding ? 'Index wird erstellt…' : 'Suchindex neu aufbauen'}
+              {rebuilding
+                ? `Index wird erstellt… (${progress.done}/${progress.total})`
+                : 'Suchindex neu aufbauen'}
             </Button>
           )}
           <Link to="/agent/articles/new" className={buttonStyles('primary', 'md')}>
