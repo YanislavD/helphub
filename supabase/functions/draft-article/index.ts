@@ -9,7 +9,8 @@
 // The language model is Groq's free tier (OpenAI-compatible API). The key lives in the Edge Function
 // secret GROQ_API_KEY – it never reaches the browser:
 //     npx supabase secrets set GROQ_API_KEY=<your key>
-// Optional: GROQ_MODEL (default llama-3.3-70b-versatile) in case Groq retires a model.
+// Optional: GROQ_MODEL – the model to try first. If a model is retired by Groq we automatically try the
+// next one from FALLBACK_MODELS.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { authenticate, HttpError } from '../_shared/auth.ts'
 import { corsHeaders, json } from '../_shared/cors.ts'
@@ -22,8 +23,20 @@ import {
 } from '../_shared/draft.ts'
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
+const DEFAULT_MODEL = 'llama-3.3-70b-versatile'
+const FALLBACK_MODELS = ['openai/gpt-oss-120b', 'llama-3.1-8b-instant']
 
-async function askModel(
+/** What Groq answered when it did not say "200 OK". */
+class ProviderError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message)
+  }
+}
+
+async function callGroq(
   system: string,
   user: string,
   apiKey: string,
@@ -50,18 +63,11 @@ async function askModel(
       signal: controller.signal,
     })
 
-    if (response.status === 429)
-      throw new HttpError(
-        429,
-        'Die KI ist gerade ausgelastet. Bitte versuche es in einer Minute erneut.',
-      )
-    if (response.status === 401 || response.status === 403) {
-      console.error('Groq rejected the API key', response.status)
-      throw new HttpError(503, 'Der KI-Dienst ist nicht richtig eingerichtet (API-Schlüssel).')
-    }
     if (!response.ok) {
-      console.error('Groq error', response.status, await response.text())
-      throw new HttpError(502, 'Der KI-Dienst hat nicht geantwortet. Bitte versuche es erneut.')
+      const body = await response.json().catch(() => null)
+      const message =
+        typeof body?.error?.message === 'string' ? body.error.message : response.statusText
+      throw new ProviderError(response.status, message)
     }
 
     const body = await response.json()
@@ -70,7 +76,6 @@ async function askModel(
       throw new HttpError(502, 'Die KI hat keine Antwort geliefert.')
     return text
   } catch (error) {
-    if (error instanceof HttpError) throw error
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw new HttpError(504, 'Die KI hat zu lange gebraucht. Bitte versuche es erneut.')
     }
@@ -78,6 +83,44 @@ async function askModel(
   } finally {
     clearTimeout(timer)
   }
+}
+
+/** Tries the preferred model first; if Groq says that model does not exist (any more), the next one. */
+async function askModel(system: string, user: string, apiKey: string, preferred: string) {
+  const models = [preferred, ...FALLBACK_MODELS.filter((m) => m !== preferred)]
+  let last: ProviderError | null = null
+
+  for (const model of models) {
+    try {
+      return { text: await callGroq(system, user, apiKey, model), model }
+    } catch (error) {
+      if (!(error instanceof ProviderError)) throw error
+      console.error('Groq error', model, error.status, error.message)
+      last = error
+      const modelProblem =
+        error.status === 404 || (error.status === 400 && /model/i.test(error.message))
+      if (!modelProblem) break // a different problem – another model would not help
+    }
+  }
+
+  const status = last?.status ?? 0
+  if (status === 429)
+    throw new HttpError(
+      429,
+      'Die KI ist gerade ausgelastet. Bitte versuche es in einer Minute erneut.',
+    )
+  if (status === 401 || status === 403) {
+    throw new HttpError(
+      503,
+      'Der KI-Dienst ist nicht richtig eingerichtet (API-Schlüssel wurde abgelehnt).',
+    )
+  }
+  // Only agents/admins can call this function and Groq's error text contains no secrets, so we show it:
+  // it tells the person (and us) what is wrong instead of a vague "try again".
+  throw new HttpError(
+    502,
+    `Der KI-Dienst hat nicht geantwortet (Groq ${status}: ${(last?.message ?? 'unbekannt').slice(0, 200)}).`,
+  )
 }
 
 Deno.serve(async (req) => {
@@ -119,16 +162,16 @@ Deno.serve(async (req) => {
       .order('sort_order')
     if (error) throw error
 
-    const model = Deno.env.get('GROQ_MODEL') ?? 'llama-3.3-70b-versatile'
-    const raw = await askModel(
+    const preferred = Deno.env.get('GROQ_MODEL') ?? DEFAULT_MODEL
+    const { text, model } = await askModel(
       buildSystemPrompt(categories),
       buildUserPrompt(description, titleHint),
       apiKey,
-      model,
+      preferred,
     )
 
     const draft = parseDraft(
-      raw,
+      text,
       categories.map((c) => c.slug),
     )
     if (!draft)
