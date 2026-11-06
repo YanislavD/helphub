@@ -1,4 +1,4 @@
-import { Search, SearchX, Sparkles, X } from 'lucide-react'
+import { Search, SearchX, Sparkles, TriangleAlert, X } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
@@ -203,6 +203,19 @@ function SearchResults({
             </span>
           )}
         </div>
+
+        {hits[0].tier === 'low' && (
+          <div
+            role="status"
+            className="flex items-start gap-3 rounded-lg border border-warn/30 bg-warn-soft px-4 py-3 text-sm text-warn"
+          >
+            <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <span>
+              <span className="font-semibold">Keine eindeutige Antwort gefunden.</span> Die
+              Vorschläge unten passen vielleicht nicht. Hilft keiner davon, erstelle ein Ticket.
+            </span>
+          </div>
+        )}
 
         {visible.map((hit, index) => (
           <ArticleCard

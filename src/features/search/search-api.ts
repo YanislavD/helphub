@@ -58,7 +58,10 @@ function toHit(row: SearchRow, semantic: boolean, bestRank: number): SearchHit {
     similarity: row.similarity ?? null,
     ftsRank,
     semRank,
-    tier: relevanceTier({ ftsRank, semRank, rank: row.rank, bestRank }, semantic),
+    tier: relevanceTier(
+      { ftsRank, similarity: row.similarity ?? null, rank: row.rank, bestRank },
+      semantic,
+    ),
   }
 }
 
