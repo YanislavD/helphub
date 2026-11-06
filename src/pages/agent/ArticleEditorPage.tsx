@@ -1,6 +1,6 @@
 import { ArrowLeft, Check } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useToast } from '@/components/toast/useToast'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -18,6 +18,9 @@ import { cn } from '@/lib/cn'
 /** Loads the article (when editing) and renders the form once the data is there. */
 export function ArticleEditorPage() {
   const { id } = useParams()
+  // ?title=… pre-fills a NEW article (used by the dashboard's "Artikel erstellen" for missing topics)
+  const [params] = useSearchParams()
+  const defaultTitle = params.get('title') ?? ''
   const article = useArticle(id)
 
   if (id && article.isPending) {
@@ -46,7 +49,13 @@ export function ArticleEditorPage() {
   }
 
   // `key` makes React build a fresh form whenever we switch to another article.
-  return <ArticleForm key={article.data?.id ?? 'new'} initial={article.data} />
+  return (
+    <ArticleForm
+      key={article.data?.id ?? 'new'}
+      initial={article.data}
+      defaultTitle={defaultTitle}
+    />
+  )
 }
 
 interface FormValues {
@@ -58,9 +67,9 @@ interface FormValues {
   status: ArticleStatus
 }
 
-function toFormValues(article?: Article): FormValues {
+function toFormValues(article?: Article, defaultTitle = ''): FormValues {
   return {
-    title: article?.title ?? '',
+    title: article?.title ?? defaultTitle,
     categoryId: article?.category_id ?? '',
     tags: article?.tags ?? [],
     summary: article?.summary ?? '',
@@ -69,17 +78,19 @@ function toFormValues(article?: Article): FormValues {
   }
 }
 
-function ArticleForm({ initial }: { initial?: Article }) {
+function ArticleForm({ initial, defaultTitle }: { initial?: Article; defaultTitle: string }) {
   const navigate = useNavigate()
   const toast = useToast()
   const { user } = useAuth()
   const categories = useCategories()
   const save = useSaveArticle(user?.id)
 
-  const [values, setValues] = useState<FormValues>(() => toFormValues(initial))
+  const [values, setValues] = useState<FormValues>(() => toFormValues(initial, defaultTitle))
   const [errors, setErrors] = useState<{ title?: string; category?: string; content?: string }>({})
   // The last saved state – used to detect unsaved changes.
-  const [baseline, setBaseline] = useState(() => JSON.stringify(toFormValues(initial)))
+  const [baseline, setBaseline] = useState(() =>
+    JSON.stringify(toFormValues(initial, defaultTitle)),
+  )
   const dirty = JSON.stringify(values) !== baseline
 
   function set<K extends keyof FormValues>(key: K, value: FormValues[K]) {

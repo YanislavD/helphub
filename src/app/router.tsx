@@ -6,6 +6,7 @@ import { AgentPlaceholderPage } from '@/pages/AgentPlaceholderPage'
 import { ArticleEditorPage } from '@/pages/agent/ArticleEditorPage'
 import { SearchQualityPage } from '@/pages/admin/SearchQualityPage'
 import { ArticlesPage } from '@/pages/agent/ArticlesPage'
+import { DashboardPage } from '@/pages/agent/DashboardPage'
 import { ArticlePage } from '@/pages/ArticlePage'
 import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
@@ -42,7 +43,7 @@ export const router = createBrowserRouter([
       </RequireRole>
     ),
     children: [
-      { path: 'agent', element: <AgentPlaceholderPage /> },
+      { path: 'agent', element: <DashboardPage /> },
       { path: 'agent/articles', element: <ArticlesPage /> },
       { path: 'agent/articles/new', element: <ArticleEditorPage /> },
       { path: 'agent/articles/:id', element: <ArticleEditorPage /> },

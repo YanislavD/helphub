@@ -116,8 +116,10 @@ export async function searchArticles(query: string): Promise<SearchOutcome> {
     )
   }
 
-  // Logging must never break searching: if it fails the user still gets results.
-  const logId = await logSearch(query, hits.length).catch(() => null)
+  // We log how many STRONG results the person got (not just any). 0 means "nothing convincing found" –
+  // those searches feed the dashboard list of missing articles. Logging must never break searching.
+  const strongHits = hits.filter((h) => h.tier !== 'low').length
+  const logId = await logSearch(query, strongHits).catch(() => null)
   return { hits, semantic, logId }
 }
 
