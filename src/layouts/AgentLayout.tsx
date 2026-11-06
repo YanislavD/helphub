@@ -2,6 +2,7 @@ import {
   ExternalLink,
   FileText,
   FolderOpen,
+  Gauge,
   LayoutDashboard,
   PanelLeft,
   Plus,
@@ -33,6 +34,7 @@ const mainItems: NavItem[] = [
 const adminItems: NavItem[] = [
   { to: '/admin/categories', label: 'Kategorien', icon: FolderOpen },
   { to: '/admin/users', label: 'Nutzer & Rollen', icon: Users },
+  { to: '/admin/search-quality', label: 'Suchqualität', icon: Gauge },
 ]
 
 function SidebarLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {

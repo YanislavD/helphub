@@ -142,7 +142,6 @@ function SearchResults({
   }
 
   const { hits, logId, semantic } = search.data
-  const best = hits[0]?.rank ?? 1
 
   // Category counts among *all* hits, so the sidebar doesn't change when you pick one.
   const counts = new Map<string, { name: string; slug: string; count: number }>()
@@ -209,8 +208,8 @@ function SearchResults({
           <ArticleCard
             key={hit.id}
             article={hit}
-            relevance={hit.rank / best}
-            best={index === 0 && !categorySlug}
+            tier={hit.tier}
+            best={index === 0 && !categorySlug && hit.tier !== 'low'}
             onOpen={() => logId && recordSearchClick(logId, hit.id)}
           />
         ))}

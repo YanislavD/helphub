@@ -4,6 +4,7 @@ import { AgentLayout } from '@/layouts/AgentLayout'
 import { EmployeeLayout } from '@/layouts/EmployeeLayout'
 import { AgentPlaceholderPage } from '@/pages/AgentPlaceholderPage'
 import { ArticleEditorPage } from '@/pages/agent/ArticleEditorPage'
+import { SearchQualityPage } from '@/pages/admin/SearchQualityPage'
 import { ArticlesPage } from '@/pages/agent/ArticlesPage'
 import { ArticlePage } from '@/pages/ArticlePage'
 import { HomePage } from '@/pages/HomePage'
@@ -48,6 +49,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireRole roles={['admin']}>
             <AgentPlaceholderPage />
+          </RequireRole>
+        ),
+      },
+      {
+        path: 'admin/search-quality',
+        element: (
+          <RequireRole roles={['admin']}>
+            <SearchQualityPage />
           </RequireRole>
         ),
       },

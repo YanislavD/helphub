@@ -1,6 +1,7 @@
 import { Check } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/Badge'
+import type { RelevanceTier } from '@/features/search/relevance'
 import { RelevanceMeter } from '@/features/search/RelevanceMeter'
 import { cn } from '@/lib/cn'
 import { formatDate } from '@/lib/format'
@@ -17,15 +18,15 @@ interface CardArticle {
 
 interface ArticleCardProps {
   article: CardArticle
-  /** 0–1, relative to the best hit. When set, a relevance meter is shown (search results). */
-  relevance?: number
+  /** When set, a relevance meter is shown (search results). */
+  tier?: RelevanceTier
   /** Highlights the top search result. */
   best?: boolean
   onOpen?: () => void
 }
 
 /** Result-style card, used for browsing articles and for search results. */
-export function ArticleCard({ article, relevance, best, onOpen }: ArticleCardProps) {
+export function ArticleCard({ article, tier, best, onOpen }: ArticleCardProps) {
   return (
     <Link
       to={`/articles/${article.slug}`}
@@ -45,8 +46,8 @@ export function ArticleCard({ article, relevance, best, onOpen }: ArticleCardPro
           )}
           {article.category && <Badge>{article.category.name}</Badge>}
         </div>
-        {relevance !== undefined ? (
-          <RelevanceMeter relevance={relevance} />
+        {tier !== undefined ? (
+          <RelevanceMeter tier={tier} />
         ) : (
           <span className="text-xs text-fg-subtle">
             Aktualisiert am {formatDate(article.updated_at)}

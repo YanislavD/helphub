@@ -1,16 +1,10 @@
 import { cn } from '@/lib/cn'
-
-/** How relevant a hit is compared to the best hit of the same search (0–1). */
-function relevanceLabel(relevance: number): string {
-  if (relevance >= 0.75) return 'Sehr relevant'
-  if (relevance >= 0.4) return 'Relevant'
-  return 'Möglicherweise relevant'
-}
+import { tierBars, tierLabels, type RelevanceTier } from './relevance'
 
 /** Five small bars, like in the design – plus the label as text for screen readers and sighted users. */
-export function RelevanceMeter({ relevance }: { relevance: number }) {
-  const filled = Math.max(1, Math.ceil(relevance * 5))
-  const label = relevanceLabel(relevance)
+export function RelevanceMeter({ tier }: { tier: RelevanceTier }) {
+  const filled = tierBars[tier]
+  const label = tierLabels[tier]
 
   return (
     <span className="inline-flex items-center gap-2" title={label}>

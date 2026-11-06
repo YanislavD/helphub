@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { relevanceTier, type RelevanceTier } from './relevance'
 
 export interface SearchHit {
   id: string
@@ -12,6 +13,10 @@ export interface SearchHit {
   rank: number
   /** Cosine similarity of the best matching chunk (hybrid search only). Handy for tuning. */
   similarity: number | null
+  /** Position in the keyword list / in the semantic list (null = that search did not find it). */
+  ftsRank: number | null
+  semRank: number | null
+  tier: RelevanceTier
 }
 
 interface SearchRow {
@@ -26,6 +31,8 @@ interface SearchRow {
   category_slug: string
   rank: number
   similarity?: number | null
+  fts_rank?: number | null
+  sem_rank?: number | null
 }
 
 export interface SearchOutcome {
@@ -36,7 +43,9 @@ export interface SearchOutcome {
   logId: string | null
 }
 
-function toHit(row: SearchRow): SearchHit {
+function toHit(row: SearchRow, semantic: boolean, bestRank: number): SearchHit {
+  const ftsRank = row.fts_rank ?? null
+  const semRank = row.sem_rank ?? null
   return {
     id: row.id,
     title: row.title,
@@ -47,6 +56,9 @@ function toHit(row: SearchRow): SearchHit {
     category: { id: row.category_id, name: row.category_name, slug: row.category_slug },
     rank: row.rank,
     similarity: row.similarity ?? null,
+    ftsRank,
+    semRank,
+    tier: relevanceTier({ ftsRank, semRank, rank: row.rank, bestRank }, semantic),
   }
 }
 
@@ -77,14 +89,27 @@ async function searchViaEdgeFunction(
   }
 }
 
-export async function searchArticles(query: string): Promise<SearchOutcome> {
+/** Runs a search WITHOUT writing to the search log (used by the quality test page). */
+export async function runSearch(query: string): Promise<{ hits: SearchHit[]; semantic: boolean }> {
   const { rows, semantic } = await searchViaEdgeFunction(query)
-  const hits = rows.map(toHit)
+  const bestRank = rows[0]?.rank ?? 0
+  return { hits: rows.map((row) => toHit(row, semantic, bestRank)), semantic }
+}
+
+export async function searchArticles(query: string): Promise<SearchOutcome> {
+  const { hits, semantic } = await runSearch(query)
 
   if (import.meta.env.DEV) {
     // Development aid for tuning the similarity thresholds (see hybrid_search_articles).
     console.table(
-      hits.map((h) => ({ title: h.title, score: h.rank, similarity: h.similarity, semantic })),
+      hits.map((h) => ({
+        title: h.title,
+        score: h.rank,
+        similarity: h.similarity,
+        fts: h.ftsRank,
+        sem: h.semRank,
+        tier: h.tier,
+      })),
     )
   }
 
