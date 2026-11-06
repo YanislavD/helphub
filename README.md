@@ -25,7 +25,7 @@ HelpHub ist eine Wissensdatenbank für die IT-Unterstützung eines mittelständi
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Mitarbeitende** (`user`) | Suchen in normaler Sprache · Artikel lesen (Inhaltsverzeichnis, ähnliche Artikel, Lesezeit) · „War dieser Artikel hilfreich?“ mit Kommentar · Ticket erstellen (mit Screenshot/PDF) · „Meine Tickets“ · Hell/Dunkel-Design                                                  |
 | **IT-Agents** (`agent`)    | Zusätzlich: Artikel schreiben und bearbeiten (Markdown mit Live-Vorschau, Tags, Entwurf/Veröffentlicht) · **KI-Assistent**: aus einer formlosen Lösungsbeschreibung entsteht ein Artikelentwurf · Dashboard mit Suchstatistik, fehlenden Artikeln, Bewertungen und Aufrufen |
-| **Admins** (`admin`)       | Zusätzlich: Suchindex neu aufbauen · Seite „Suchqualität“ (18 Testfragen gegen die echte Suche) · Rollen und Kategorien (Datenbank-Ebene fertig, Verwaltungsoberfläche siehe [Ausblick](#bekannte-grenzen-und-ausblick))                                                    |
+| **Admins** (`admin`)       | Zusätzlich: Suchindex neu aufbauen · Seite „Suchqualität“ (18 Testfragen gegen die echte Suche) · Kategorien verwalten (anlegen, umbenennen, Symbol wählen, Reihenfolge ändern, löschen) · Nutzer und Rollen verwalten (der letzte Admin kann nicht entfernt werden)        |
 
 Alle Texte der Oberfläche sind auf Deutsch, Code und Kommentare auf Englisch. Das Design ist dunkel, responsiv und in einem Design-System mit CSS-Variablen definiert (`src/index.css`).
 
@@ -103,7 +103,7 @@ Die Schwelle `STRONG_SIMILARITY = 0.86` ist an diesen Fragen kalibriert (`src/fe
 
 ## Sicherheit
 
-- **Row Level Security auf allen Tabellen.** Mitarbeitende sehen nur veröffentlichte Artikel sowie eigene Stimmen, Suchen und Tickets; Agents sehen und bearbeiten alle Artikel; nur Admins ändern Rollen und Kategorien. Eine Rolle kann man sich nicht selbst geben. Der Route-Guard im Frontend ist nur Komfort – die echte Absicherung liegt in der Datenbank.
+- **Row Level Security auf allen Tabellen.** Mitarbeitende sehen nur veröffentlichte Artikel sowie eigene Stimmen, Suchen und Tickets; Agents sehen und bearbeiten alle Artikel; nur Admins ändern Rollen und Kategorien. Eine Rolle kann man sich nicht selbst geben, und ein Datenbank-Trigger verhindert, dass der letzte Admin entfernt wird. Der Route-Guard im Frontend ist nur Komfort – die echte Absicherung liegt in der Datenbank.
 - **`service_role`-Schlüssel nie im Frontend.** Er wird nur in Edge Functions benutzt, und erst nachdem Token und Rolle des Aufrufers geprüft wurden. Die Funktionen prüfen den Aufrufer selbst (`verify_jwt = false`, weil die Plattform-Prüfung die neuen API-Schlüssel nicht versteht).
 - **Statistik-Funktionen** (`SECURITY DEFINER`) prüfen als Erstes `is_staff()`; Mitarbeitende bekommen einen Fehler.
 - **Dateianhänge** liegen in einem privaten Bucket unter `<user-id>/<ticket-id>/…`; Storage-Richtlinien erlauben nur den eigenen Ordner (Agents lesen alle). Größe (10 MB) und Dateitypen werden im Browser _und_ von Storage geprüft.
@@ -158,7 +158,7 @@ npm install
 
 5. **Starten:** `npm run dev` und <http://localhost:5173> öffnen. Als Admin anmelden und unter _Artikel → Suchindex neu aufbauen_ die Vektoren für die Demo-Artikel erzeugen (ohne diesen Schritt greift nur die Stichwortsuche).
 
-Ohne Seed: Konto registrieren, dann in der Tabelle `profiles` die Spalte `role` des Kontos auf `admin` setzen – so wird man erster Admin.
+Ohne Seed: Konto registrieren, dann in der Tabelle `profiles` die Spalte `role` des Kontos auf `admin` setzen – so wird man erster Admin. Alle weiteren Rollen vergibt man danach unter _Nutzer & Rollen_.
 
 ### Skripte
 
@@ -172,9 +172,9 @@ Ohne Seed: Konto registrieren, dann in der Tabelle `profiles` die Spalte `role` 
 
 ## Tests und CI
 
-- **97 Vitest-Tests** (15 Dateien): reine Logik (Slugs, Abschnitte für Embeddings, Relevanz-Stufen, Inhaltsverzeichnis, Dateinamen, sichere Weiterleitung, Parser für KI-Antworten, Fehlertexte) und Komponenten mit Testing Library (Anmelde- und Registrierformular, Rollen-Guard, Tag-Eingabe, Artikelkarte, Markdown-Rendering inkl. XSS-Schutz, Design-Umschalter).
+- **107 Vitest-Tests** (16 Dateien): reine Logik (Slugs, Abschnitte für Embeddings, Relevanz-Stufen, Inhaltsverzeichnis, Dateinamen, sichere Weiterleitung, Parser für KI-Antworten, Fehlertexte) und Komponenten mit Testing Library (Anmelde- und Registrierformular, Rollen-Guard, Tag-Eingabe, Artikelkarte, Markdown-Rendering inkl. XSS-Schutz, Design-Umschalter).
 - **SQL-Regressionstests** in `supabase/tests/` – im SQL-Editor ausführen; jeder legt Testdaten in einer Transaktion an und rollt sie am Ende zurück (Erfolg: `NOTICE: ALL … CHECKS PASSED`):
-  `rls_policies.sql` (Rollen und Rechte), `search.sql` (Volltext, Suchprotokoll), `semantic_search.sql` (Vektorsuche mit synthetischen Vektoren), `feedback_tickets.sql` (Stimmen, Tickets, Storage), `dashboard.sql` (Zugriff und Kennzahlen).
+  `rls_policies.sql` (Rollen und Rechte), `search.sql` (Volltext, Suchprotokoll), `semantic_search.sql` (Vektorsuche mit synthetischen Vektoren), `feedback_tickets.sql` (Stimmen, Tickets, Storage), `dashboard.sql` (Zugriff und Kennzahlen), `admin_tools.sql` (Nutzerliste, Kategorien, Schutz des letzten Admins).
 - **GitHub Actions** (`.github/workflows/ci.yml`) führt bei jedem Push und Pull Request Prettier, ESLint, TypeScript, Tests und den Build aus.
 
 ## Projektstruktur
@@ -203,7 +203,6 @@ supabase/
 ## Bekannte Grenzen und Ausblick
 
 - **Embedding-Modell:** `gte-small` ist vor allem auf Englisch trainiert; bei deutschem Text sind die Ähnlichkeitswerte eng gestaffelt (siehe oben). Mit mehr Artikeln ist ein mehrsprachiges Modell eine Option.
-- **Verwaltungsoberfläche** für Kategorien und Nutzer/Rollen (Design-Screen 9) ist noch Platzhalter; die Datenbankregeln dafür stehen. Rollen ändert man bisher in der Tabelle `profiles`.
 - **Tickets** werden in einer eigenen Tabelle gespeichert, bis eine separate Ticket-Anwendung angebunden ist (Idee: „Ticket in Artikel umwandeln“). Es gibt keine E-Mail-Benachrichtigungen.
 - **KI-Entwürfe** nutzen den kostenlosen Tarif von Groq: begrenztes Kontingent, und Eingaben werden an einen Drittanbieter gesendet. Für echte Firmendaten ist ein eigener Anbieter oder ein selbst betriebenes Modell nötig. Entwürfe müssen immer von Menschen geprüft werden.
 - **Deployment** (z. B. Netlify) ist noch offen; die Konfiguration ist dafür vorbereitet (Umgebungsvariablen, statischer Build).

@@ -2,9 +2,10 @@ import { createBrowserRouter } from 'react-router-dom'
 import { RequireRole } from '@/features/auth/RequireRole'
 import { AgentLayout } from '@/layouts/AgentLayout'
 import { EmployeeLayout } from '@/layouts/EmployeeLayout'
-import { AgentPlaceholderPage } from '@/pages/AgentPlaceholderPage'
 import { ArticleEditorPage } from '@/pages/agent/ArticleEditorPage'
+import { CategoriesPage } from '@/pages/admin/CategoriesPage'
 import { SearchQualityPage } from '@/pages/admin/SearchQualityPage'
+import { UsersPage } from '@/pages/admin/UsersPage'
 import { ArticlesPage } from '@/pages/agent/ArticlesPage'
 import { DashboardPage } from '@/pages/agent/DashboardPage'
 import { ArticlePage } from '@/pages/ArticlePage'
@@ -51,7 +52,7 @@ export const router = createBrowserRouter([
         path: 'admin/categories',
         element: (
           <RequireRole roles={['admin']}>
-            <AgentPlaceholderPage />
+            <CategoriesPage />
           </RequireRole>
         ),
       },
@@ -67,7 +68,7 @@ export const router = createBrowserRouter([
         path: 'admin/users',
         element: (
           <RequireRole roles={['admin']}>
-            <AgentPlaceholderPage />
+            <UsersPage />
           </RequireRole>
         ),
       },
