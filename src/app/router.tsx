@@ -5,6 +5,7 @@ import { EmployeeLayout } from '@/layouts/EmployeeLayout'
 import { AgentPlaceholderPage } from '@/pages/AgentPlaceholderPage'
 import { ArticleEditorPage } from '@/pages/agent/ArticleEditorPage'
 import { ArticlesPage } from '@/pages/agent/ArticlesPage'
+import { ArticlePage } from '@/pages/ArticlePage'
 import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: 'search', element: <SearchPage /> },
+      { path: 'articles/:slug', element: <ArticlePage /> },
     ],
   },
   {

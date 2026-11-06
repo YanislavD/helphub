@@ -1,14 +1,20 @@
-import { Search, Sparkles } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import type { UseQueryResult } from '@tanstack/react-query'
+import { ChevronRight, Search, Sparkles, TrendingUp } from 'lucide-react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { getCategoryIcon } from '@/features/articles/category-icons'
 import { useCategories } from '@/features/articles/hooks'
+import type { PortalArticle } from '@/features/articles/portal-api'
+import { useCategoryCounts, usePublishedArticles } from '@/features/articles/portal-hooks'
 import { exampleQueries } from '@/lib/categories'
 
 export function HomePage() {
   const [query, setQuery] = useState('')
   const categoriesQuery = useCategories()
+  const counts = useCategoryCounts()
+  const popular = usePublishedArticles({ order: 'popular', limit: 5 })
+  const latest = usePublishedArticles({ order: 'new', limit: 5 })
   const navigate = useNavigate()
 
   function handleSubmit(event: FormEvent) {
@@ -75,8 +81,9 @@ export function HomePage() {
             Array.from({ length: 6 }, (_, i) => (
               <div key={i} className="h-[84px] animate-pulse rounded-lg border bg-hover" />
             ))}
-          {categoriesQuery.data?.map(({ slug, name, icon }) => {
+          {categoriesQuery.data?.map(({ id, slug, name, icon }) => {
             const Icon = getCategoryIcon(icon)
+            const count = counts.data?.[id] ?? 0
             return (
               <Link
                 key={slug}
@@ -86,7 +93,10 @@ export function HomePage() {
                 <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-accent-line bg-accent-soft text-accent-hi">
                   <Icon className="size-[22px]" aria-hidden="true" />
                 </span>
-                <span className="text-[15px] font-semibold">{name}</span>
+                <span className="flex flex-col gap-0.5">
+                  <span className="text-[15px] font-semibold">{name}</span>
+                  {counts.data && <span className="text-xs text-fg-subtle">{count} Artikel</span>}
+                </span>
               </Link>
             )
           })}
@@ -97,6 +107,86 @@ export function HomePage() {
           </p>
         )}
       </section>
+
+      <section className="mx-auto w-full max-w-[1160px] px-4 pb-24 sm:px-6">
+        <div className="grid items-start gap-6 md:grid-cols-2">
+          <ArticleList
+            title="Beliebte Artikel"
+            icon={<TrendingUp className="size-[18px] text-fg-subtle" aria-hidden="true" />}
+            query={popular}
+            emptyText="Sobald Artikel gelesen werden, erscheinen die beliebtesten hier."
+            showViews
+          />
+          <ArticleList
+            title="Neue Artikel"
+            icon={<Sparkles className="size-[18px] text-fg-subtle" aria-hidden="true" />}
+            query={latest}
+            emptyText="Noch keine Artikel veröffentlicht."
+            aside={
+              <Link to="/search" className="text-[13px] text-accent-hi hover:underline">
+                Alle ansehen
+              </Link>
+            }
+          />
+        </div>
+      </section>
     </>
+  )
+}
+
+interface ArticleListProps {
+  title: string
+  icon: ReactNode
+  query: UseQueryResult<PortalArticle[]>
+  emptyText: string
+  showViews?: boolean
+  aside?: ReactNode
+}
+
+/** A titled card with a short list of articles (home page: popular / new). */
+function ArticleList({ title, icon, query, emptyText, showViews, aside }: ArticleListProps) {
+  return (
+    <div className="overflow-hidden rounded-lg border bg-raised">
+      <div className="flex items-center justify-between px-5 pt-5 pb-3">
+        <h2 className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
+          {icon}
+          {title}
+        </h2>
+        {aside}
+      </div>
+      <ul className="flex flex-col p-2 pt-0">
+        {query.isPending &&
+          Array.from({ length: 4 }, (_, i) => (
+            <li key={i} className="px-3 py-3">
+              <div className="h-5 animate-pulse rounded-sm bg-hover-2" />
+            </li>
+          ))}
+        {query.data?.map((article) => (
+          <li key={article.id}>
+            <Link
+              to={`/articles/${article.slug}`}
+              className="flex items-start gap-3 rounded-sm px-3 py-2.5 transition hover:bg-hover-2"
+            >
+              <span className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="text-sm leading-5 font-semibold">{article.title}</span>
+                <span className="text-xs text-fg-subtle">
+                  {article.category?.name}
+                  {showViews && ` · ${article.view_count.toLocaleString('de-DE')} Aufrufe`}
+                </span>
+              </span>
+              <ChevronRight className="mt-0.5 size-4 shrink-0 text-fg-subtle" aria-hidden="true" />
+            </Link>
+          </li>
+        ))}
+        {query.isError && (
+          <li role="alert" className="px-3 py-3 text-sm text-err">
+            Konnte nicht geladen werden.
+          </li>
+        )}
+        {query.isSuccess && query.data.length === 0 && (
+          <li className="px-3 py-6 text-center text-sm text-fg-muted">{emptyText}</li>
+        )}
+      </ul>
+    </div>
   )
 }
