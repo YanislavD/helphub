@@ -1,20 +1,57 @@
+import { Check } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/Badge'
+import { RelevanceMeter } from '@/features/search/RelevanceMeter'
+import { cn } from '@/lib/cn'
 import { formatDate } from '@/lib/format'
-import type { PortalArticle } from './portal-api'
 
-/** Result-style card, used for browsing articles (search results will reuse it in stage 5). */
-export function ArticleCard({ article }: { article: PortalArticle }) {
+/** The few fields a card needs – both normal list items and search hits have them. */
+interface CardArticle {
+  id: string
+  title: string
+  slug: string
+  summary: string
+  updated_at: string
+  category: { name: string } | null
+}
+
+interface ArticleCardProps {
+  article: CardArticle
+  /** 0–1, relative to the best hit. When set, a relevance meter is shown (search results). */
+  relevance?: number
+  /** Highlights the top search result. */
+  best?: boolean
+  onOpen?: () => void
+}
+
+/** Result-style card, used for browsing articles and for search results. */
+export function ArticleCard({ article, relevance, best, onOpen }: ArticleCardProps) {
   return (
     <Link
       to={`/articles/${article.slug}`}
-      className="block rounded-lg border bg-raised p-5 transition duration-200 hover:-translate-y-0.5 hover:border-line-2 hover:bg-overlay hover:shadow-card"
+      onClick={onOpen}
+      className={cn(
+        'block rounded-lg border bg-raised p-5 transition duration-200 hover:-translate-y-0.5 hover:border-line-2 hover:bg-overlay hover:shadow-card',
+        best && 'border-accent-line shadow-[0_20px_50px_-30px_var(--accent)]',
+      )}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        {article.category && <Badge>{article.category.name}</Badge>}
-        <span className="text-xs text-fg-subtle">
-          Aktualisiert am {formatDate(article.updated_at)}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {best && (
+            <Badge variant="accent">
+              <Check className="size-3" strokeWidth={3} aria-hidden="true" />
+              Beste Übereinstimmung
+            </Badge>
+          )}
+          {article.category && <Badge>{article.category.name}</Badge>}
+        </div>
+        {relevance !== undefined ? (
+          <RelevanceMeter relevance={relevance} />
+        ) : (
+          <span className="text-xs text-fg-subtle">
+            Aktualisiert am {formatDate(article.updated_at)}
+          </span>
+        )}
       </div>
       <h3 className="mt-3.5 text-lg font-semibold tracking-tight">{article.title}</h3>
       {article.summary && (
