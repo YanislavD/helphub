@@ -155,6 +155,18 @@
   button {
     cursor: pointer;
   }
+
+  /*
+   * The open list of a native <select> is drawn by the browser. Without explicit colors it
+   * keeps the OS default (white background) while our text color is light → invisible options.
+   */
+  option {
+    background-color: var(--overlay);
+    color: var(--fg);
+  }
+  option:disabled {
+    color: var(--fg-subtle);
+  }
 }
 
 /*
