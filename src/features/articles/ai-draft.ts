@@ -7,6 +7,8 @@ export interface AiDraft {
   category_slug: string | null
   tags: string[]
   content: string
+  /** Gaps the AI found – to be checked by the author before publishing. */
+  review_notes: string[]
 }
 
 export const MIN_DESCRIPTION = 20

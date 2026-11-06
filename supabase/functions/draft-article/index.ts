@@ -56,7 +56,7 @@ async function callGroq(
           { role: 'system', content: system },
           { role: 'user', content: user },
         ],
-        temperature: 0.3, // low = sticks to the facts instead of getting creative
+        temperature: 0.2, // low = sticks to the facts instead of getting creative
         max_tokens: 2500,
         response_format: { type: 'json_object' },
       }),

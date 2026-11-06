@@ -101,6 +101,7 @@ function ArticleForm({ initial, defaultTitle }: { initial?: Article; defaultTitl
 
   // True after an AI draft was inserted, until the agent saves: reminds them to check the facts.
   const [fromAi, setFromAi] = useState(false)
+  const [aiNotes, setAiNotes] = useState<string[]>([])
 
   function applyAiDraft(draft: AiDraft) {
     const category = categories.data?.find((c) => c.slug === draft.category_slug)
@@ -116,6 +117,7 @@ function ArticleForm({ initial, defaultTitle }: { initial?: Article; defaultTitl
     }))
     setErrors({})
     setFromAi(true)
+    setAiNotes(draft.review_notes)
   }
 
   // Ask the browser to warn before closing the tab with unsaved work.
@@ -150,6 +152,7 @@ function ArticleForm({ initial, defaultTitle }: { initial?: Article; defaultTitl
       const saved = await save.mutateAsync({ id: initial?.id, input })
       setBaseline(JSON.stringify(values))
       setFromAi(false)
+      setAiNotes([])
       toast({
         title: values.status === 'published' ? 'Artikel veröffentlicht' : 'Entwurf gespeichert',
         description: `„${saved.title}“`,
@@ -225,6 +228,17 @@ function ArticleForm({ initial, defaultTitle }: { initial?: Article; defaultTitl
             <span className="font-semibold">KI-Entwurf – bitte genau prüfen.</span> Die KI kann sich
             irren oder Details auslassen. Kontrolliere Schritte und Fakten, bevor du den Artikel
             veröffentlichst.
+            {aiNotes.length > 0 && (
+              <>
+                {' '}
+                Die KI hat diese offenen Punkte gefunden:
+                <ul className="mt-1.5 list-disc pl-5">
+                  {aiNotes.map((note) => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+              </>
+            )}
           </span>
         </div>
       )}
@@ -232,11 +246,7 @@ function ArticleForm({ initial, defaultTitle }: { initial?: Article; defaultTitl
       {/* AI assistant: only when writing a NEW article */}
       {!initial && (
         <div className="px-4 pt-6 sm:px-6">
-          <AiDraftPanel
-            titleHint={defaultTitle || undefined}
-            hasContent={values.content.trim().length > 0}
-            onApply={applyAiDraft}
-          />
+          <AiDraftPanel hasContent={values.content.trim().length > 0} onApply={applyAiDraft} />
         </div>
       )}
 

@@ -64,7 +64,35 @@ describe('parseDraft', () => {
   })
 })
 
+describe('review notes', () => {
+  it('keeps the open questions of the model, cleaned', () => {
+    const draft = parseDraft(
+      JSON.stringify({
+        ...valid,
+        review_notes: [
+          ' Welche Modelle sind betroffen? ',
+          '',
+          42,
+          'Welche Modelle sind betroffen?',
+        ],
+      }),
+      slugs,
+    )
+    expect(draft?.review_notes).toEqual(['Welche Modelle sind betroffen?'])
+  })
+
+  it('defaults to an empty list', () => {
+    expect(parseDraft(JSON.stringify(valid), slugs)?.review_notes).toEqual([])
+  })
+})
+
 describe('prompts', () => {
+  it('makes the description the only source of facts', () => {
+    const prompt = buildSystemPrompt([])
+    expect(prompt).toContain('EINZIGE Quelle')
+    expect(prompt).toContain('review_notes')
+  })
+
   it('lists every allowed category in the system prompt', () => {
     const prompt = buildSystemPrompt([
       { slug: 'hardware', name: 'Hardware' },
@@ -77,6 +105,7 @@ describe('prompts', () => {
   it('marks the description as data and includes the optional hint', () => {
     const prompt = buildUserPrompt('  Entferne die SIM.  ', 'sim karte fehler')
     expect(prompt).toContain('sim karte fehler')
+    expect(prompt).toContain('Vorrang')
     expect(prompt).toContain('"""\nEntferne die SIM.\n"""')
   })
 })

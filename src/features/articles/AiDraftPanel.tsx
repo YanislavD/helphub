@@ -11,8 +11,6 @@ import {
 } from './ai-draft'
 
 interface AiDraftPanelProps {
-  /** e.g. the search term the dashboard flagged as unanswered – helps the model pick the topic. */
-  titleHint?: string
   /** true if the editor already contains text that a draft would overwrite */
   hasContent: boolean
   onApply: (draft: AiDraft) => void
@@ -22,7 +20,7 @@ interface AiDraftPanelProps {
  * "Describe the solution you found – the AI writes a draft."
  * The draft goes into the editor (as a draft, nothing is saved or published) so a human can check it.
  */
-export function AiDraftPanel({ titleHint, hasContent, onApply }: AiDraftPanelProps) {
+export function AiDraftPanel({ hasContent, onApply }: AiDraftPanelProps) {
   const [description, setDescription] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
@@ -34,7 +32,7 @@ export function AiDraftPanel({ titleHint, hasContent, onApply }: AiDraftPanelPro
     setPending(true)
     setError('')
     try {
-      const draft = await generateArticleDraft(description, titleHint)
+      const draft = await generateArticleDraft(description)
       // Never silently throw away what the agent has already written.
       if (hasContent) setWaitingDraft(draft)
       else onApply(draft)
