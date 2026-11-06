@@ -381,7 +381,7 @@ function HelpfulCell({ stats }: { stats?: { helpful: number; total: number } }) 
       </div>
       <span
         className={cn(
-          'w-10 text-right text-[13px] tabular-nums',
+          'w-12 text-right text-[13px] whitespace-nowrap tabular-nums',
           low ? 'text-warn' : 'text-fg-muted',
         )}
       >
