@@ -374,4 +374,30 @@
   .prose-hh .markdown-alert-caution .markdown-alert-title {
     color: var(--err);
   }
+
+  /*
+   * The plugin hard-codes English titles ("Note", "Warning"). Hide that text (font-size: 0; the
+   * icon keeps its own size) and print the German title via ::after instead.
+   */
+  .prose-hh .markdown-alert-title {
+    font-size: 0;
+  }
+  .prose-hh .markdown-alert-title::after {
+    font-size: 14px;
+  }
+  .prose-hh .markdown-alert-note .markdown-alert-title::after {
+    content: 'Hinweis';
+  }
+  .prose-hh .markdown-alert-tip .markdown-alert-title::after {
+    content: 'Tipp';
+  }
+  .prose-hh .markdown-alert-important .markdown-alert-title::after {
+    content: 'Wichtig';
+  }
+  .prose-hh .markdown-alert-warning .markdown-alert-title::after {
+    content: 'Achtung';
+  }
+  .prose-hh .markdown-alert-caution .markdown-alert-title::after {
+    content: 'Vorsicht';
+  }
 }
