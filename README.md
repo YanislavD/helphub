@@ -25,7 +25,7 @@ HelpHub ist eine Wissensdatenbank für die IT-Unterstützung eines mittelständi
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Mitarbeitende** (`user`) | Suchen in normaler Sprache · Artikel lesen (Inhaltsverzeichnis, ähnliche Artikel, Lesezeit) · „War dieser Artikel hilfreich?“ mit Kommentar · Ticket erstellen (mit Screenshot/PDF) · „Meine Tickets“ · Hell/Dunkel-Design                                                  |
 | **IT-Agents** (`agent`)    | Zusätzlich: Artikel schreiben und bearbeiten (Markdown mit Live-Vorschau, Tags, Entwurf/Veröffentlicht) · **KI-Assistent**: aus einer formlosen Lösungsbeschreibung entsteht ein Artikelentwurf · Dashboard mit Suchstatistik, fehlenden Artikeln, Bewertungen und Aufrufen |
-| **Admins** (`admin`)       | Zusätzlich: Suchindex neu aufbauen · Seite „Suchqualität“ (18 Testfragen gegen die echte Suche) · Kategorien verwalten (anlegen, umbenennen, Symbol wählen, Reihenfolge ändern, löschen) · Nutzer und Rollen verwalten (der letzte Admin kann nicht entfernt werden)        |
+| **Admins** (`admin`)       | Zusätzlich: Suchindex neu aufbauen · Seite „Suchqualität“ (30 Testfragen gegen die echte Suche) · Kategorien verwalten (anlegen, umbenennen, Symbol wählen, Reihenfolge ändern, löschen) · Nutzer und Rollen verwalten (der letzte Admin kann nicht entfernt werden)        |
 
 Alle Texte der Oberfläche sind auf Deutsch, Code und Kommentare auf Englisch. Das Design ist dunkel, responsiv und in einem Design-System mit CSS-Variablen definiert (`src/index.css`).
 
@@ -71,7 +71,7 @@ flowchart LR
   A -- "Suche · Indexierung · Entwurf" --> E
   E -- "als Aufrufer (RLS gilt)" --> B
   E -- "service_role nur nach Rollenprüfung" --> B
-  E -- "gte-small Embeddings (im Runtime, kostenlos)" --> E
+  E -- "Gemini Embeddings (kostenloser Tarif)" --> E
   E -- "Artikelentwurf" --> F
 ```
 
@@ -84,22 +84,24 @@ Alles läuft auf kostenlosen Angeboten – es gibt keine bezahlten API-Schlüsse
 Die Suche kombiniert zwei Verfahren und mischt ihre Ergebnisse:
 
 1. **Stichwortsuche (PostgreSQL Volltext, Konfiguration `german`).** Wörter werden auf ihren Stamm reduziert („Drucker“, „Druckern“ → `druck`), Füllwörter fallen weg, der Titel zählt mehr als der Text (Gewichtung A > B > C). Ein GIN-Index macht sie schnell. Wörter, die in über 30 % der Artikel vorkommen, werden ignoriert.
-2. **Semantische Suche (pgvector).** Jeder Artikel wird in Abschnitte (~900 Zeichen) zerlegt; das Modell `gte-small` läuft direkt in der Edge Function und macht aus jedem Abschnitt einen Vektor mit 384 Zahlen. Die Frage wird genauso umgerechnet, die ähnlichsten Abschnitte findet ein HNSW-Index (Kosinus-Ähnlichkeit). So findet „Ich komme nicht in meinen PC rein“ auch „Windows-Passwort zurücksetzen“, ohne dass ein Wort übereinstimmt.
+2. **Semantische Suche (pgvector).** Jeder Artikel wird in Abschnitte (~900 Zeichen) zerlegt; das mehrsprachige Modell `gemini-embedding-001` (kostenloser Tarif der Google-Gemini-API, aufgerufen aus der Edge Function) macht aus jedem Abschnitt einen Vektor mit 384 Zahlen. Die Frage wird genauso umgerechnet, die ähnlichsten Abschnitte findet ein HNSW-Index (Kosinus-Ähnlichkeit). So findet „Ich komme nicht in meinen PC rein“ auch „Windows-Passwort zurücksetzen“, ohne dass ein Wort übereinstimmt.
 3. **Reciprocal Rank Fusion.** Beide Rangfolgen werden nur über ihre _Positionen_ verbunden (`1/(60 + Rang)`), nicht über ihre unvergleichbaren Punktzahlen.
 
-Die Relevanz wird bewusst als Stufe angezeigt („Sehr relevant“, „Relevant“, „Möglicherweise relevant“) statt als Prozentwert: Die Ähnlichkeiten von `gte-small` liegen bei deutschem Text eng zusammen (ca. 0,80–0,94). Ist der beste Treffer schwach, erscheint der Hinweis „Keine eindeutige Antwort gefunden“ samt Ticket-Angebot. Fällt die KI-Suche aus, greift die Stichwortsuche als Rückfall.
+Die Relevanz wird bewusst als Stufe angezeigt („Sehr relevant“, „Relevant“, „Möglicherweise relevant“) statt als Prozentwert: Die Ähnlichkeitswerte sind Rohwerte eines Modells, keine Wahrscheinlichkeiten. Ist der beste Treffer schwach, erscheint der Hinweis „Keine eindeutige Antwort gefunden“ samt Ticket-Angebot. Fällt die KI-Suche aus, greift die Stichwortsuche als Rückfall.
 
 ### Gemessene Qualität
 
-Die Admin-Seite **Suchqualität** führt 18 Testfragen gegen die echte Suche aus (27 Artikel):
+Die Admin-Seite **Suchqualität** führt 30 Testfragen gegen die echte Suche aus (78 Artikel):
 
 | Messwert                                                                 | Ergebnis |
 | ------------------------------------------------------------------------ | -------- |
-| Richtiger Artikel auf Platz 1 (15 Fragen mit Antwort)                    | 15 / 15  |
-| Richtiger Artikel in den Top 3                                           | 15 / 15  |
-| Fragen ohne Antwort („Kaffeemaschine kaputt“ u. a.) ohne starken Treffer | 3 / 3    |
+| Richtiger Artikel auf Platz 1 (25 Fragen mit Antwort)                    | 24 / 25  |
+| Richtiger Artikel in den Top 3                                           | 25 / 25  |
+| Fragen ohne Antwort („Kaffeemaschine kaputt“ u. a.) ohne starken Treffer | 5 / 5    |
 
-Die Schwelle `STRONG_SIMILARITY = 0.86` ist an diesen Fragen kalibriert (`src/features/search/relevance.ts`); der Abstand ist schmal und sollte bei mehr Artikeln erneut geprüft werden.
+Die Schwelle `STRONG_SIMILARITY` (`src/features/search/relevance.ts`) ist an diesen Fragen kalibriert und sollte bei mehr Artikeln erneut geprüft werden.
+
+**Warum Gemini statt `gte-small`?** Zuerst lief das eingebaute Modell `gte-small`. Es ist vor allem auf Englisch trainiert: Bei deutschem Text lagen alle Ähnlichkeiten eng zusammen (ca. 0,80–0,94). Mit 78 statt 27 Artikeln fiel es deutlich ab (17 / 25 auf Platz 1, 3 / 5 bei Fragen ohne Antwort). Der Wechsel auf ein mehrsprachiges Modell brachte den Sprung auf 24 / 25 und 5 / 5. Die Testseite hat den Wechsel messbar begründet – deshalb ist sie Teil des Projekts.
 
 ## Sicherheit
 
@@ -147,11 +149,13 @@ npm install
 
    > Mit der Supabase-CLI v3 zielt `db push` ohne `--remote` auf eine _lokale_ Docker-Datenbank.
 
-3. **Demo-Daten:** Inhalt von `supabase/seed.sql` im SQL-Editor von Supabase ausführen (Konten, 27 Artikel, Stimmen, Tickets). Optional `supabase/seed_demo_activity.sql` für ein gefülltes Dashboard.
+3. **Demo-Daten:** Inhalt von `supabase/seed.sql` im SQL-Editor von Supabase ausführen (Konten, 27 Artikel, Stimmen, Tickets), danach die beiden Dateien in `supabase/seed/` (51 weitere Artikel). Optional `supabase/seed_demo_activity.sql` für ein gefülltes Dashboard.
 4. **Edge Functions** bereitstellen:
 
    ```bash
    npx supabase functions deploy --use-api
+   # Suche: kostenloser Schlüssel von aistudio.google.com/apikey (bleibt auf dem Server)
+   npx supabase secrets set GEMINI_API_KEY=<dein-schluessel>
    # nur für den KI-Assistenten (Schlüssel von console.groq.com, bleibt auf dem Server):
    npx supabase secrets set GROQ_API_KEY=<dein-schluessel>
    ```
@@ -172,7 +176,7 @@ Ohne Seed: Konto registrieren, dann in der Tabelle `profiles` die Spalte `role` 
 
 ## Tests und CI
 
-- **107 Vitest-Tests** (16 Dateien): reine Logik (Slugs, Abschnitte für Embeddings, Relevanz-Stufen, Inhaltsverzeichnis, Dateinamen, sichere Weiterleitung, Parser für KI-Antworten, Fehlertexte) und Komponenten mit Testing Library (Anmelde- und Registrierformular, Rollen-Guard, Tag-Eingabe, Artikelkarte, Markdown-Rendering inkl. XSS-Schutz, Design-Umschalter).
+- **117 Vitest-Tests** (17 Dateien): reine Logik (Slugs, Abschnitte für Embeddings, Relevanz-Stufen, Inhaltsverzeichnis, Dateinamen, sichere Weiterleitung, Parser für KI-Antworten, Fehlertexte) und Komponenten mit Testing Library (Anmelde- und Registrierformular, Rollen-Guard, Tag-Eingabe, Artikelkarte, Markdown-Rendering inkl. XSS-Schutz, Design-Umschalter).
 - **SQL-Regressionstests** in `supabase/tests/` – im SQL-Editor ausführen; jeder legt Testdaten in einer Transaktion an und rollt sie am Ende zurück (Erfolg: `NOTICE: ALL … CHECKS PASSED`):
   `rls_policies.sql` (Rollen und Rechte), `search.sql` (Volltext, Suchprotokoll), `semantic_search.sql` (Vektorsuche mit synthetischen Vektoren), `feedback_tickets.sql` (Stimmen, Tickets, Storage), `dashboard.sql` (Zugriff und Kennzahlen), `admin_tools.sql` (Nutzerliste, Kategorien, Schutz des letzten Admins).
 - **GitHub Actions** (`.github/workflows/ci.yml`) führt bei jedem Push und Pull Request Prettier, ESLint, TypeScript, Tests und den Build aus.
@@ -202,7 +206,7 @@ supabase/
 
 ## Bekannte Grenzen und Ausblick
 
-- **Embedding-Modell:** `gte-small` ist vor allem auf Englisch trainiert; bei deutschem Text sind die Ähnlichkeitswerte eng gestaffelt (siehe oben). Mit mehr Artikeln ist ein mehrsprachiges Modell eine Option.
+- **Embedding-Modell:** Die Suche hängt vom kostenlosen Tarif der Gemini-API ab (Ratenlimit). Bei Ausfall oder fehlendem Schlüssel greift die Stichwortsuche. Wechselt man das Modell, muss der Suchindex neu aufgebaut werden.
 - **Tickets** werden in einer eigenen Tabelle gespeichert, bis eine separate Ticket-Anwendung angebunden ist (Idee: „Ticket in Artikel umwandeln“). Es gibt keine E-Mail-Benachrichtigungen.
 - **KI-Entwürfe** nutzen den kostenlosen Tarif von Groq: begrenztes Kontingent, und Eingaben werden an einen Drittanbieter gesendet. Für echte Firmendaten ist ein eigener Anbieter oder ein selbst betriebenes Modell nötig. Entwürfe müssen immer von Menschen geprüft werden.
 - **Deployment** (z. B. Netlify) ist noch offen; die Konfiguration ist dafür vorbereitet (Umgebungsvariablen, statischer Build).
