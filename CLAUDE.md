@@ -20,7 +20,7 @@ HelpHub е база знания (Knowledge Base) за IT поддръжка в�
 - **Frontend:** React + Vite + TypeScript, Tailwind CSS, React Router, TanStack Query
 - **Markdown:** редактор с преглед (напр. `@uiw/react-md-editor`), рендиране с `react-markdown`
 - **Backend:** Supabase – Postgres, Auth, Storage, Edge Functions (Deno)
-- **AI търсене:** вграденият модел `gte-small` в Supabase Edge Functions (`new Supabase.ai.Session('gte-small')`, `mean_pool: true`, `normalize: true`) → вектори с 384 измерения, съхранявани с `pgvector`
+- **AI търсене:** Gemini `gemini-embedding-001` (безплатен API ключ, `outputDimensionality: 384`, нормализиране в кода; първоначално gte-small, сменен заради слаб немски) → вектори с 384 измерения, съхранявани с `pgvector`
 - **Тестове:** Vitest + React Testing Library
 - **CI/CD:** GitHub Actions (lint, тестове, build), deploy на Netlify
 

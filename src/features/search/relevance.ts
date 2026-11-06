@@ -3,13 +3,13 @@ export type RelevanceTier = 'high' | 'medium' | 'low'
 /**
  * Cosine similarity from which a semantic hit counts as "strong".
  *
- * Calibrated on 2026-11-06 with the 18 test questions of /admin/search-quality (27 articles):
- *  - the correct top hit of the 15 answerable questions had similarity 0.864 – 0.941
- *  - the top hit of the 3 unanswerable questions had 0.827 – 0.854
- * gte-small is English-centric, so German similarities are compressed and this margin is narrow
- * (~0.01). Re-run the test page and re-check this value whenever articles or the model change.
+ * HISTORY: with the English-centric gte-small model this was 0.86 (all German similarities lay in
+ * 0.80–0.94 and, with 78 articles, wrong articles scored as high as right ones: 17/25 correct).
+ * Since the switch to Gemini embeddings (multilingual) the scale is different, so the value below
+ * is PROVISIONAL: calibrate it with /admin/search-quality – it should lie between the best wrong
+ * hit of the "no answer" questions and the weakest correct hit of the answerable ones.
  */
-export const STRONG_SIMILARITY = 0.86
+export const STRONG_SIMILARITY = 0.72
 
 interface TierInput {
   /** Position in the keyword result list (null = not found by keywords). */

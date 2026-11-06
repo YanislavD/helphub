@@ -3,7 +3,7 @@
 //   POST { "query": "ich komme nicht in meinen PC rein" }
 //   → { "semantic": true, "hits": [ … ] }
 //
-// 1. embed the question with gte-small (same model that embedded the articles)
+// 1. embed the question with Gemini (same model that embedded the articles, see _shared/embed.ts)
 // 2. call the SQL function hybrid_search_articles, which fuses keyword and vector results
 //
 // The database call runs AS THE CALLER (userClient), so Row Level Security still applies – this
@@ -11,7 +11,13 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { authenticate, HttpError } from '../_shared/auth.ts'
 import { corsHeaders, json } from '../_shared/cors.ts'
-import { embed, toVectorLiteral } from '../_shared/embed.ts'
+import { embedQuery, toVectorLiteral } from '../_shared/embed.ts'
+
+// Gemini embeddings spread German texts much wider than gte-small did (0.80–0.94), so the database
+// defaults (floor 0.80, margin 0.06) would throw away every hit. These values are deliberately
+// permissive; the UI decides what counts as "strong" (STRONG_SIMILARITY in relevance.ts).
+const MIN_SIMILARITY = 0.5
+const RELATIVE_MARGIN = 0.15
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -27,7 +33,7 @@ Deno.serve(async (req) => {
 
     let embedding: number[] | null = null
     try {
-      embedding = await embed(query)
+      embedding = await embedQuery(query, Deno.env.get('GEMINI_API_KEY'))
     } catch (error) {
       console.error('embedding failed, falling back to keyword search', error)
     }
@@ -37,6 +43,8 @@ Deno.serve(async (req) => {
           p_query: query,
           p_embedding: toVectorLiteral(embedding),
           p_limit: 30,
+          p_min_similarity: MIN_SIMILARITY,
+          p_relative_margin: RELATIVE_MARGIN,
         })
       : await userClient.rpc('search_articles', { p_query: query, p_limit: 30 })
     if (error) throw error

@@ -9,11 +9,13 @@ describe('relevanceTier – hybrid search', () => {
   })
 
   it('is "medium" for a strong match found only by meaning', () => {
-    expect(relevanceTier({ ...base, similarity: 0.88 }, true)).toBe('medium')
+    expect(relevanceTier({ ...base, similarity: STRONG_SIMILARITY + 0.02 }, true)).toBe('medium')
   })
 
   it('is "low" when the similarity is weak, even if keywords matched', () => {
-    expect(relevanceTier({ ...base, ftsRank: 1, similarity: 0.85 }, true)).toBe('low')
+    expect(relevanceTier({ ...base, ftsRank: 1, similarity: STRONG_SIMILARITY - 0.01 }, true)).toBe(
+      'low',
+    )
   })
 
   it('treats the threshold itself as strong', () => {
