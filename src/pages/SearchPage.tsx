@@ -1,4 +1,4 @@
-import { Search, SearchX, X } from 'lucide-react'
+import { Search, SearchX, Sparkles, X } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
@@ -141,7 +141,7 @@ function SearchResults({
     )
   }
 
-  const { hits, logId } = search.data
+  const { hits, logId, semantic } = search.data
   const best = hits[0]?.rank ?? 1
 
   // Category counts among *all* hits, so the sidebar doesn't change when you pick one.
@@ -193,6 +193,16 @@ function SearchResults({
             </span>{' '}
             für „{query}“ · sortiert nach Relevanz
           </span>
+          {semantic ? (
+            <span className="inline-flex h-[22px] items-center gap-1.5 rounded-full border border-accent-line bg-accent-soft px-2.5 text-xs font-medium text-accent-hi">
+              <Sparkles className="size-3.5" aria-hidden="true" />
+              KI-gestützte Suche
+            </span>
+          ) : (
+            <span className="text-xs text-fg-subtle">
+              KI-Suche gerade nicht verfügbar – Suche nach Stichworten
+            </span>
+          )}
         </div>
 
         {visible.map((hit, index) => (

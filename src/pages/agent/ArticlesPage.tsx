@@ -1,7 +1,9 @@
-import { FileText, Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { FileText, Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useToast } from '@/components/toast/useToast'
+import { rebuildSearchIndex } from '@/features/articles/indexing'
+import { useAuth } from '@/features/auth/useAuth'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { buttonStyles } from '@/components/ui/button-styles'
@@ -22,6 +24,28 @@ const statusTabs: Array<{ value: ArticleStatus | 'all'; label: string }> = [
 
 export function ArticlesPage() {
   const toast = useToast()
+  const { role } = useAuth()
+  const [rebuilding, setRebuilding] = useState(false)
+
+  async function handleRebuildIndex() {
+    setRebuilding(true)
+    try {
+      const result = await rebuildSearchIndex()
+      toast({
+        title: 'Suchindex aktualisiert',
+        description: `${result.indexed} Artikel, ${result.chunks} Abschnitte.`,
+      })
+    } catch {
+      toast({
+        title: 'Index konnte nicht erstellt werden',
+        description: 'Bitte versuche es erneut. Details stehen im Funktions-Log von Supabase.',
+        variant: 'error',
+      })
+    } finally {
+      setRebuilding(false)
+    }
+  }
+
   const [search, setSearch] = useState('')
   const [categoryId, setCategoryId] = useState<string>('all')
   const [status, setStatus] = useState<ArticleStatus | 'all'>('all')
@@ -80,10 +104,26 @@ export function ArticlesPage() {
             {articles.data ? `${total} Artikel` : 'Wird geladen…'}
           </p>
         </div>
-        <Link to="/agent/articles/new" className={buttonStyles('primary', 'md')}>
-          <Plus className="size-4" aria-hidden="true" />
-          Neuer Artikel
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          {role === 'admin' && (
+            <Button
+              variant="secondary"
+              onClick={() => void handleRebuildIndex()}
+              disabled={rebuilding}
+              title="Berechnet die KI-Suche für alle veröffentlichten Artikel neu"
+            >
+              <RefreshCw
+                className={cn('size-4', rebuilding && 'animate-spin')}
+                aria-hidden="true"
+              />
+              {rebuilding ? 'Index wird erstellt…' : 'Suchindex neu aufbauen'}
+            </Button>
+          )}
+          <Link to="/agent/articles/new" className={buttonStyles('primary', 'md')}>
+            <Plus className="size-4" aria-hidden="true" />
+            Neuer Artikel
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 px-4 py-6 sm:px-8">

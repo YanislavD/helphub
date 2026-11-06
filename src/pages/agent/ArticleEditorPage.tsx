@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/Select'
 import { TagInput } from '@/components/ui/TagInput'
 import { TextField } from '@/components/ui/TextField'
 import { useArticle, useCategories, useSaveArticle } from '@/features/articles/hooks'
+import { indexArticle } from '@/features/articles/indexing'
 import { MarkdownEditor } from '@/features/articles/MarkdownEditor'
 import type { Article, ArticleInput, ArticleStatus } from '@/features/articles/types'
 import { useAuth } from '@/features/auth/useAuth'
@@ -121,6 +122,17 @@ function ArticleForm({ initial }: { initial?: Article }) {
         description: `„${saved.title}“`,
       })
       if (!initial) navigate(`/agent/articles/${saved.id}`, { replace: true })
+
+      // Update the AI-search index in the background. A failure here must not undo the save,
+      // but the agent should know the article may not be findable by meaning yet.
+      indexArticle(saved.id).catch(() =>
+        toast({
+          title: 'Suchindex nicht aktualisiert',
+          description:
+            'Der Artikel ist gespeichert, aber in der KI-Suche vielleicht noch nicht auffindbar. Speichere ihn später erneut.',
+          variant: 'error',
+        }),
+      )
     } catch {
       toast({
         title: 'Speichern fehlgeschlagen',
