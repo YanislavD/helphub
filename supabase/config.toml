@@ -428,3 +428,6 @@ verify_jwt = false
 
 [functions.search]
 verify_jwt = false
+
+[functions.draft-article]
+verify_jwt = false

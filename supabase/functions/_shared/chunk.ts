@@ -19,7 +19,10 @@ const GERMAN_ALERT_TITLES: Record<string, string> = {
 export function markdownToPlainText(markdown: string): string {
   return markdown
     .replace(/\r\n/g, '\n')
-    .replace(/^>\s*\[!(\w+)\]\s*$/gm, (_m, type: string) => `${GERMAN_ALERT_TITLES[type.toUpperCase()] ?? 'Hinweis'}:`)
+    .replace(
+      /^>\s*\[!(\w+)\]\s*$/gm,
+      (_m, type: string) => `${GERMAN_ALERT_TITLES[type.toUpperCase()] ?? 'Hinweis'}:`,
+    )
     .replace(/^```.*$/gm, '') // fence lines (keep the code itself, commands are searchable)
     .replace(/^>\s?/gm, '') // blockquote markers
     .replace(/^#{1,6}\s+/gm, '') // heading markers
@@ -47,7 +50,9 @@ function splitLongBlock(block: string, maxChars: number): string[] {
   }
   if (current) parts.push(current)
   // A single sentence without punctuation could still be too long: hard-cut it.
-  return parts.flatMap((p) => (p.length > maxChars ? p.match(new RegExp(`.{1,${maxChars}}`, 'gs')) ?? [p] : [p]))
+  return parts.flatMap((p) =>
+    p.length > maxChars ? (p.match(new RegExp(`.{1,${maxChars}}`, 'gs')) ?? [p]) : [p],
+  )
 }
 
 /**
@@ -57,7 +62,11 @@ function splitLongBlock(block: string, maxChars: number): string[] {
  * Every body chunk starts with the title so that a chunk like "Starte den PC neu." keeps its context.
  */
 export function chunkArticle(article: ChunkableArticle, maxChars = 900): string[] {
-  const head = [article.title, article.summary, article.tags.length ? `Stichworte: ${article.tags.join(', ')}` : '']
+  const head = [
+    article.title,
+    article.summary,
+    article.tags.length ? `Stichworte: ${article.tags.join(', ')}` : '',
+  ]
     .filter(Boolean)
     .join('\n')
 

@@ -1,4 +1,4 @@
-import { ArrowLeft, Check } from 'lucide-react'
+import { ArrowLeft, Check, TriangleAlert } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useToast } from '@/components/toast/useToast'
@@ -8,6 +8,8 @@ import { buttonStyles } from '@/components/ui/button-styles'
 import { Select } from '@/components/ui/Select'
 import { TagInput } from '@/components/ui/TagInput'
 import { TextField } from '@/components/ui/TextField'
+import { AiDraftPanel } from '@/features/articles/AiDraftPanel'
+import type { AiDraft } from '@/features/articles/ai-draft'
 import { useArticle, useCategories, useSaveArticle } from '@/features/articles/hooks'
 import { indexArticle } from '@/features/articles/indexing'
 import { MarkdownEditor } from '@/features/articles/MarkdownEditor'
@@ -97,6 +99,25 @@ function ArticleForm({ initial, defaultTitle }: { initial?: Article; defaultTitl
     setValues((current) => ({ ...current, [key]: value }))
   }
 
+  // True after an AI draft was inserted, until the agent saves: reminds them to check the facts.
+  const [fromAi, setFromAi] = useState(false)
+
+  function applyAiDraft(draft: AiDraft) {
+    const category = categories.data?.find((c) => c.slug === draft.category_slug)
+    setValues((current) => ({
+      ...current,
+      title: draft.title,
+      summary: draft.summary,
+      content: draft.content,
+      tags: draft.tags,
+      // keep the agent's own choice if the model suggested nothing usable
+      categoryId: category?.id ?? current.categoryId,
+      status: 'draft', // an AI draft is never published automatically
+    }))
+    setErrors({})
+    setFromAi(true)
+  }
+
   // Ask the browser to warn before closing the tab with unsaved work.
   useEffect(() => {
     if (!dirty) return
@@ -128,6 +149,7 @@ function ArticleForm({ initial, defaultTitle }: { initial?: Article; defaultTitl
     try {
       const saved = await save.mutateAsync({ id: initial?.id, input })
       setBaseline(JSON.stringify(values))
+      setFromAi(false)
       toast({
         title: values.status === 'published' ? 'Artikel veröffentlicht' : 'Entwurf gespeichert',
         description: `„${saved.title}“`,
@@ -192,6 +214,31 @@ function ArticleForm({ initial, defaultTitle }: { initial?: Article; defaultTitl
           )}
         </Button>
       </div>
+
+      {fromAi && (
+        <div
+          role="status"
+          className="mx-4 mt-4 flex items-start gap-3 rounded-lg border border-warn/30 bg-warn-soft px-4 py-3 text-sm text-warn sm:mx-6"
+        >
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <span>
+            <span className="font-semibold">KI-Entwurf – bitte genau prüfen.</span> Die KI kann sich
+            irren oder Details auslassen. Kontrolliere Schritte und Fakten, bevor du den Artikel
+            veröffentlichst.
+          </span>
+        </div>
+      )}
+
+      {/* AI assistant: only when writing a NEW article */}
+      {!initial && (
+        <div className="px-4 pt-6 sm:px-6">
+          <AiDraftPanel
+            titleHint={defaultTitle || undefined}
+            hasContent={values.content.trim().length > 0}
+            onApply={applyAiDraft}
+          />
+        </div>
+      )}
 
       {/* Meta */}
       <div className="flex flex-col gap-4 px-4 pt-6 pb-4 sm:px-6">

@@ -68,9 +68,13 @@ export async function authenticate(req: Request): Promise<AuthContext> {
     .single()
   if (profileError || !profile) throw new HttpError(403, 'No profile for this user')
 
-  const adminClient = createClient(url, readKey('SUPABASE_SECRET_KEYS', 'SUPABASE_SERVICE_ROLE_KEY'), {
-    auth: { persistSession: false },
-  })
+  const adminClient = createClient(
+    url,
+    readKey('SUPABASE_SECRET_KEYS', 'SUPABASE_SERVICE_ROLE_KEY'),
+    {
+      auth: { persistSession: false },
+    },
+  )
 
   return { userId: data.user.id, role: profile.role, userClient, adminClient }
 }

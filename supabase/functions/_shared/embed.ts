@@ -5,7 +5,10 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 declare const Supabase: {
   ai: {
     Session: new (model: string) => {
-      run(input: string, options: { mean_pool: boolean; normalize: boolean }): Promise<ArrayLike<number>>
+      run(
+        input: string,
+        options: { mean_pool: boolean; normalize: boolean },
+      ): Promise<ArrayLike<number>>
     }
   }
 }
