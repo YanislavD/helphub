@@ -11,6 +11,7 @@ import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { SearchPage } from '@/pages/SearchPage'
+import { TicketsPage } from '@/pages/TicketsPage'
 
 /**
  * Route table. Layouts are "shells" around groups of pages:
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: 'search', element: <SearchPage /> },
       { path: 'articles/:slug', element: <ArticlePage /> },
+      { path: 'tickets', element: <TicketsPage /> },
     ],
   },
   {

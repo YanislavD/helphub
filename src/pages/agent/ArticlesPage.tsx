@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useToast } from '@/components/toast/useToast'
 import { rebuildSearchIndex } from '@/features/articles/indexing'
+import { useFeedbackSummary } from '@/features/feedback/hooks'
 import { useAuth } from '@/features/auth/useAuth'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -26,6 +27,7 @@ export function ArticlesPage() {
   const toast = useToast()
   const { role } = useAuth()
   const [rebuilding, setRebuilding] = useState(false)
+  const feedback = useFeedbackSummary(true)
   const [progress, setProgress] = useState({ done: 0, total: 0 })
 
   async function handleRebuildIndex() {
@@ -214,6 +216,7 @@ export function ArticlesPage() {
                   <th className="px-4 py-3">Kategorie</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Aufrufe</th>
+                  <th className="w-40 px-4 py-3">Hilfreich</th>
                   <th className="px-4 py-3">Aktualisiert</th>
                   <th className="w-24 px-4 py-3">
                     <span className="sr-only">Aktionen</span>
@@ -258,6 +261,9 @@ export function ArticlesPage() {
                       {article.status === 'published'
                         ? article.view_count.toLocaleString('de-DE')
                         : '–'}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <HelpfulCell stats={feedback.data?.[article.id]} />
                     </td>
                     <td className="px-4 py-3.5 text-[13px] text-fg-muted">
                       {formatDate(article.updated_at)}
@@ -354,5 +360,33 @@ export function ArticlesPage() {
         onCancel={() => setToDelete(null)}
       />
     </>
+  )
+}
+
+/** "Helpful" rate of an article as a small bar + percentage (colour warns below 70 %). */
+function HelpfulCell({ stats }: { stats?: { helpful: number; total: number } }) {
+  if (!stats || stats.total === 0) return <span className="text-[13px] text-fg-subtle">–</span>
+  const percent = Math.round((stats.helpful / stats.total) * 100)
+  const low = percent < 70
+  return (
+    <div
+      className="flex items-center gap-2.5"
+      title={`${stats.helpful} von ${stats.total} Bewertungen positiv`}
+    >
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-hover-2">
+        <div
+          className={cn('h-full rounded-full', low ? 'bg-warn' : 'bg-accent')}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <span
+        className={cn(
+          'w-10 text-right text-[13px] tabular-nums',
+          low ? 'text-warn' : 'text-fg-muted',
+        )}
+      >
+        {percent} %
+      </span>
+    </div>
   )
 }

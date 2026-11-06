@@ -5,6 +5,10 @@ import { MarkdownContent } from '@/components/MarkdownContent'
 import { Badge } from '@/components/ui/Badge'
 import { buttonStyles } from '@/components/ui/button-styles'
 import { incrementArticleViews } from '@/features/articles/portal-api'
+import { FeedbackBlock } from '@/features/feedback/FeedbackBlock'
+import { useFeedbackStats } from '@/features/feedback/hooks'
+import { useTicketDialog } from '@/features/tickets/useTicketDialog'
+import { Button } from '@/components/ui/Button'
 import {
   useAuthorName,
   usePublishedArticle,
@@ -62,6 +66,8 @@ export function ArticlePage() {
 
   const author = useAuthorName(article?.author_id)
   const related = useRelatedArticles(article?.category_id, articleId)
+  const stats = useFeedbackStats(articleId)
+  const { openTicketDialog } = useTicketDialog()
 
   // Count the view once per browser session and article. sessionStorage also protects against
   // React StrictMode (which runs effects twice in development) and against reload spam.
@@ -92,6 +98,10 @@ export function ArticlePage() {
   if (!article) return <ArticleNotFound />
 
   const toc = extractToc(article.content)
+  const ticketPrefill = {
+    title: `Problem mit: ${article.title}`.slice(0, 150),
+    sourceArticleId: article.id,
+  }
 
   return (
     <div className="mx-auto w-full max-w-[1160px] px-4 pt-7 pb-24 sm:px-6">
@@ -142,6 +152,22 @@ export function ArticlePage() {
           </header>
 
           <MarkdownContent>{article.content}</MarkdownContent>
+
+          <div className="mt-10 flex flex-col gap-4">
+            <FeedbackBlock
+              articleId={article.id}
+              onCreateTicket={() => openTicketDialog(ticketPrefill)}
+            />
+            <section className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-accent-line bg-[linear-gradient(135deg,var(--accent-soft),transparent_65%)] p-6">
+              <div className="flex flex-col">
+                <h2 className="text-[15px] font-semibold">Problem nicht gelöst?</h2>
+                <p className="text-[13px] text-fg-muted">
+                  Erstelle ein Ticket – wir übernehmen den Artikel als Hinweis.
+                </p>
+              </div>
+              <Button onClick={() => openTicketDialog(ticketPrefill)}>Ticket erstellen</Button>
+            </section>
+          </div>
         </article>
 
         <aside className="flex max-w-[320px] min-w-0 flex-[1_1_260px] flex-col gap-4">
@@ -184,6 +210,28 @@ export function ArticlePage() {
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {stats.data && stats.data.total >= 3 && (
+            <div className="flex flex-col gap-2 rounded-lg border bg-raised p-5 text-[13px]">
+              <div className="flex items-center justify-between">
+                <span className="text-fg-muted">Hilfreich</span>
+                <span className="font-semibold tabular-nums">
+                  {Math.round((stats.data.helpful / stats.data.total) * 100)} %
+                </span>
+              </div>
+              <div
+                className="h-1.5 overflow-hidden rounded-full bg-hover-2"
+                role="img"
+                aria-label={`${stats.data.helpful} von ${stats.data.total} fanden den Artikel hilfreich`}
+              >
+                <div
+                  className="h-full rounded-full bg-accent"
+                  style={{ width: `${(stats.data.helpful / stats.data.total) * 100}%` }}
+                />
+              </div>
+              <span className="text-xs text-fg-subtle">{stats.data.total} Bewertungen</span>
             </div>
           )}
 

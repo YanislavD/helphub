@@ -7,6 +7,7 @@ import { ArticleCard } from '@/features/articles/ArticleCard'
 import { useCategories } from '@/features/articles/hooks'
 import { usePublishedArticles } from '@/features/articles/portal-hooks'
 import { useSearch } from '@/features/search/hooks'
+import { useTicketDialog } from '@/features/tickets/useTicketDialog'
 import { recordSearchClick } from '@/features/search/search-api'
 import { exampleQueries } from '@/lib/categories'
 import { cn } from '@/lib/cn'
@@ -110,6 +111,8 @@ function SearchResults({
 }) {
   const search = useSearch(query)
   const [, setParams] = useSearchParams()
+  const { openTicketDialog } = useTicketDialog()
+  const createTicket = () => openTicketDialog({ title: query, sourceQuery: query })
 
   if (query.length < 2) {
     return <p className="text-sm text-fg-muted">Bitte gib mindestens zwei Zeichen ein.</p>
@@ -177,7 +180,7 @@ function SearchResults({
             </button>
           ))}
         </div>
-        <TicketHint className="mt-6 w-full max-w-xl text-left" />
+        <TicketHint className="mt-6 w-full max-w-xl text-left" onCreate={createTicket} />
       </div>
     )
   }
@@ -227,7 +230,7 @@ function SearchResults({
           />
         ))}
 
-        <TicketHint className="mt-2" />
+        <TicketHint className="mt-2" onCreate={createTicket} />
       </main>
 
       <aside className="flex max-w-[320px] min-w-0 flex-[1_1_240px] flex-col gap-4">
@@ -295,8 +298,8 @@ function CategoryFilter({
   )
 }
 
-/** "Not found what you need? Create a ticket" – the button is enabled in stage 7. */
-function TicketHint({ className }: { className?: string }) {
+/** "Not found what you need? Create a ticket" – opens the ticket dialog with the search text. */
+function TicketHint({ className, onCreate }: { className?: string; onCreate: () => void }) {
   return (
     <div
       className={cn(
@@ -310,7 +313,7 @@ function TicketHint({ className }: { className?: string }) {
           Wir übernehmen deine Beschreibung automatisch ins Ticket.
         </span>
       </div>
-      <Button variant="secondary" disabled title="Kommt in Etappe 7">
+      <Button variant="secondary" onClick={onCreate}>
         Ticket erstellen
       </Button>
     </div>

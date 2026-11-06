@@ -1,5 +1,5 @@
 import type { UseQueryResult } from '@tanstack/react-query'
-import { ChevronRight, Search, Sparkles, TrendingUp } from 'lucide-react'
+import { ChevronRight, Search, Sparkles, Ticket, TrendingUp } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
@@ -7,12 +7,14 @@ import { getCategoryIcon } from '@/features/articles/category-icons'
 import { useCategories } from '@/features/articles/hooks'
 import type { PortalArticle } from '@/features/articles/portal-api'
 import { useCategoryCounts, usePublishedArticles } from '@/features/articles/portal-hooks'
+import { useTicketDialog } from '@/features/tickets/useTicketDialog'
 import { exampleQueries } from '@/lib/categories'
 
 export function HomePage() {
   const [query, setQuery] = useState('')
   const categoriesQuery = useCategories()
   const counts = useCategoryCounts()
+  const { openTicketDialog } = useTicketDialog()
   const popular = usePublishedArticles({ order: 'popular', limit: 5 })
   const latest = usePublishedArticles({ order: 'new', limit: 5 })
   const navigate = useNavigate()
@@ -128,6 +130,27 @@ export function HomePage() {
               </Link>
             }
           />
+        </div>
+      </section>
+
+      <section className="mx-auto w-full max-w-[1160px] px-4 pb-24 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-5 rounded-lg border bg-[linear-gradient(135deg,var(--accent-soft),transparent_60%)] px-7 py-6">
+          <div className="flex items-center gap-4">
+            <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-accent-line bg-accent-soft text-accent-hi">
+              <Ticket className="size-[22px]" aria-hidden="true" />
+            </span>
+            <div className="flex flex-col">
+              <span className="text-[15px] font-semibold">
+                Du brauchst direkt persönliche Hilfe?
+              </span>
+              <span className="text-[13px] text-fg-muted">
+                Erstelle ein Ticket – das IT-Team kümmert sich darum.
+              </span>
+            </div>
+          </div>
+          <Button variant="secondary" onClick={() => openTicketDialog()}>
+            Ticket erstellen
+          </Button>
         </div>
       </section>
     </>

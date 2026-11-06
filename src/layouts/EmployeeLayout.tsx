@@ -11,6 +11,7 @@ import { cn } from '@/lib/cn'
 const baseLinks = [
   { to: '/', label: 'Startseite', end: true },
   { to: '/search', label: 'Alle Artikel', end: false },
+  { to: '/tickets', label: 'Meine Tickets', end: false },
 ]
 
 /** Simple top navigation for employees (design screens 2–5). */
